@@ -1,0 +1,73 @@
+:root
+	--color-text-primary: rgba( 255, 255, 255, 1 )
+	--color-text-secondary: rgba(235, 235, 245, 0.6)
+	--color-text-quaternary: rgba(235, 235, 245, 0.18)
+	--color-fill-primary: rgba(44, 44, 46, 1)
+	--color-fill-secondary: rgba(37, 37, 37, 0.5)
+
+// bubble class
+.country-bubble
+	user-select: none
+	backface-visibility: hidden
+	margin-top: 21px
+	transform-origin: center center
+
+	&::after
+		content: ''
+		display: block
+		position: absolute
+		left: calc( 50% - 15px )
+		width: 0
+		height: 0
+		border-left: 15px solid transparent
+		border-right: 15px solid transparent
+		border-top: 40px solid rgba( 20, 46, 87, .85 )
+
+	.container
+		position: relative
+		width: 254px
+		z-index: 10
+		border-radius: 4
+		background-color: rgba( 20, 46, 87, .85 )
+		backdrop-filter: blur( 20px )
+		border-radius: .25rem
+		padding: .75rem
+
+	.country-header
+		display: flex
+		justify-content: space-between
+		align-items: flex-start
+		margin-bottom: 1rem
+
+	.country-name
+		font-size: 1em
+		font-weight: 600
+		margin: 0
+		color: rgba( 255, 255, 255, 1 )
+
+	.country-link
+		display: flex
+		align-items: center
+		font-size: .75rem
+		font-weight: 600
+		color: rgba( 110, 161, 237, 1 )
+		text-decoration: none
+		min-width: 118px
+		margin-top: 2px
+
+	.country-body
+		font-size: .75rem
+		font-weight: 400
+		color: rgba( 255, 255, 255, 1 )
+		margin: 0
+		line-height: 1.125rem
+		font-feature-settings: 'tnum' on, 'lnum' on
+
+	.icon-chevron
+		width: 1rem
+		height: 1rem
+		
+		path
+			fill: none
+			stroke: rgba( 110, 161, 237, 1 )
+			// d: path( "M9 18 15 12 9 6" )
