@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import './ActivitySnapshot.sass'
+// import { TestProvider } from './contexts/testContext'
+import { QueuesProvider } from './contexts/componentReadyContext'
 
+
+import TridgeGlobe from './components/Globe/TridgeGlobe'
 // import useCycle from './hooks/useCycle'
 // import useComponentsReady from './hooks/useComponentReady'
 import useTest from './hooks/useTest'
@@ -8,7 +12,7 @@ import useFetch from './hooks/useFetch'
 
 const GEO_JSON_URI: string = './custom.geojson'
 
-function App() {
+export default function App() {
 	const { data: geoJSON, isLoading } = useFetch<any>( GEO_JSON_URI )
 	const [ value, setString ] = useTest()
 	// const [ initCycle ] = useCycle()
@@ -37,11 +41,12 @@ function App() {
 	}
 
 	return (
-		<div id="activity-snapshot">
-			<h1 className='service-title'>Activity Snapshot</h1>
-			<button onClick={() => test() }>{ value }</button>
-		</div>
+		<QueuesProvider>
+			<div id="activity-snapshot">
+				<h1 className='service-title'>Activity Snapshot</h1>
+				<button onClick={() => test() }>{ value }</button>
+				<TridgeGlobe></TridgeGlobe>
+			</div>
+		</QueuesProvider>
 	)
 }
-
-export default App

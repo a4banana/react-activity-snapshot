@@ -45,13 +45,17 @@ type BuyerInquirySellerForWorldMapType = {
 	createdAt: Date
 }
 
-// for composables/useComponentsReady
 type Queue = {
     key: string
     isDone: boolean
 }
 
 type QueueCollection = Array<Queue>
+
+interface QueuesContext {
+    isAllDone: boolean
+    queues: QueueCollection
+}
  
 // for composables/useCountryData
 
