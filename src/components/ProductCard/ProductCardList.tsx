@@ -4,13 +4,12 @@ import { useContext } from 'react'
 import { InquiryContext } from '../../contexts/inqContext'
 
 export default function ProductCardList() {
-    const inquiries = InquiryContext
+    const { original } = useContext( InquiryContext )
 
-    console.log( inquiries )
+    console.log( original )
     
     return (
         <ul className="product-card-list">
-            
         </ul>
     )
 }
