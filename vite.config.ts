@@ -14,5 +14,5 @@ export default defineConfig({
       '@': resolve( __dirname, './src' )
     }    
   },
-  plugins: [react(), mkcert()]
+  plugins: [react({ jsxRuntime: 'classic' }), mkcert()]
 })

@@ -1,0 +1,48 @@
+@import '../../assets/easings'
+
+.play-and-pause, .progress-indicator
+    width: 2rem
+    height: 2rem
+
+.play-and-pause
+    border-radius: 1rem
+    position: relative
+    display: flex
+    align-items: center
+    justify-content: center
+    user-select: none
+    cursor: pointer
+    overflow: hidden
+
+    transform: scale( 0.6 )
+    transition: transform .33s $backOut
+
+    &:hover
+        background-color: var( --color-fill-primary )
+
+    &:active
+        transform: scale( 0.925 )
+
+    &.is-loaded
+        transform: scale( 1 )
+        .play-and-pause-icon
+            transform: scale( 1 )
+
+.progress-indicator
+    position: absolute
+    z-index: 1
+
+.play-and-pause-icon
+    width: 1.25rem
+    height: 1.25rem
+    transform: scale( 0 )
+    fill: var( --color-text-primary )
+    transition: transform .33s $quintOut
+
+    path
+        d: path( "M11,10 L18,13.74 18,22.28 11,26 M18,13.74 L26,18 26,18 18,22.28" )
+        transition: d .24s
+        
+.is-playing
+    path
+        d: path( "M11,10 L18,10 17,26 11,26 M20,10 L26,10 26,26 20,26" )

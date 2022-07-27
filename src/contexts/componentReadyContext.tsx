@@ -10,6 +10,18 @@ export enum QueuesActionType {
     DONE_QUEUE
 }
 
+type Queue = {
+    key: string
+    isDone: boolean
+}
+
+type QueueCollection = Array<Queue>
+
+interface QueuesContext {
+    isAllDone: boolean
+    queues: QueueCollection
+}
+
 export interface QueuesAction {
     type: QueuesActionType;
     payload?: Queue | undefined
@@ -26,20 +38,22 @@ function queuesReducer( state: QueuesContext, { type, payload }: QueuesAction ):
     switch ( type ) {
         case QueuesActionType.INIT_QUEUE:
             return { isAllDone: true, queues: [] }
-        case QueuesActionType.ADD_QUEUE:
+        case QueuesActionType.ADD_QUEUE: {
             if ( !payload ) return state
             const { key } = payload
             return {
                 ...state,
                 queues: [ ...state.queues, { key, isDone: false }]
             }
-        case QueuesActionType.DONE_QUEUE:
+        }
+        case QueuesActionType.DONE_QUEUE: {
+            if ( !payload ) return state
+            const { key } = payload
             if ( !hasKey( state.queues, key )) console.error( key + ' has never queued.' )
             return { ...state,
                 queues: state.queues.map(( queue: Queue ) => ( queue.key === key && !queue.isDone ) ? { ...queue, isDone: true } : queue )
             }
-        default:
-            throw new Error( type + ' is unknown action' )
+        }
     }
 }
 
