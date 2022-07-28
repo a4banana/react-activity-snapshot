@@ -12,28 +12,23 @@ export interface InquiryAction {
     type: InquiryActionType
 }
 
-interface InqContextState {
-    original: BuyerInquirySellerForWorldMapList
-}
+type InquiryState = BuyerInquirySellerForWorldMapList
 
-const initialState: InqContextState = {
-    original: inqData as any
-}
+const initialState: InquiryState = inqData as any
 
-export const InquiryContext = createContext<InqContextState | null>( null )
+export const InquiryContext = createContext<InquiryState | null>( null )
 export const InquiryDispatchContext = createContext<Dispatch<InquiryAction> | null>( null )
 
-function inqReducer( state: InqContextState, { type }: InquiryAction ): InqContextState {
+function inqReducer( state: InquiryState, { type }: InquiryAction ): InquiryState {
     switch( type ) {
         case InquiryActionType.GET_INQ: {
             return state
         }
     }
-    
 }
 
 export function InquiryProvider({ children }: { children: ReactNode }) {
-    const [ inquiries, dispatch ] = useReducer( inqReducer, initialState );
+    const [ inquiries , dispatch ] = useReducer( inqReducer, initialState )
     
     return (
         <InquiryContext.Provider value={ inquiries }>
@@ -41,5 +36,5 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
                 { children }
             </InquiryDispatchContext.Provider>
         </InquiryContext.Provider>
-    );
+    )
 }

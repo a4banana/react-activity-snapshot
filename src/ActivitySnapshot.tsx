@@ -10,7 +10,6 @@ import ProductCardList from './components/ProductCard/ProductCardList'
 // import useCycle from './hooks/useCycle'
 // import useComponentsReady from './hooks/useComponentReady'
 import useFetch from './hooks/useFetch'
-
 const GEO_JSON_URI: string = './custom.geojson'
 
 export default function App() {
@@ -20,7 +19,7 @@ export default function App() {
 
 	// on Mounted
 	useEffect(() => {
-		console.log( geoJSON )
+		if ( geoJSON ) console.log( geoJSON )
 	}, [ geoJSON ])
 
 	async function loadingComplete() {

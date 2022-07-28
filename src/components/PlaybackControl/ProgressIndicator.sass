@@ -5,7 +5,7 @@
 
     &.is-playing
         .track, .thumb
-            // stroke-width: v-bind( strokeWidth )
+            stroke-width: 2.8
         .thumb
             fill: none
             transition: stroke-width .33s $quintIn
@@ -16,7 +16,7 @@
             transition: stroke-dashoffset 2s $sineOut
 
 .track, .thumb
-    stroke-width: v-bind( strokeWidth / 3 )
+    stroke-width: calc( 2.8 / 3 )
     transition: stroke-width .33s $quintIn
 
 .thumb

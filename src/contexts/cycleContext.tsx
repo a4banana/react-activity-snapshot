@@ -7,7 +7,8 @@ export const CycleDispatchContext = createContext<Dispatch<CycleAction>>( {} as 
 export enum CycleActionTypes {
     TOGGLE_PLAY, 
     PAUSE,
-    PLAY
+    PLAY,
+    SET_PROGRESS
 }
 
 type CycleState = {
@@ -19,24 +20,35 @@ type CycleState = {
 
 export interface CycleAction {
     type: CycleActionTypes
+    payload?: {
+        progress: number
+    }
 }
 
 const initialState: CycleState = {
     cycle: 0, 
-    isPlaying: false,
+    isPlaying: true,
     isLoading: false,
     progress: 0
 }
 
-function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
+function cycleReducer( state: CycleState, { type, payload }: CycleAction ): CycleState {
     switch ( type ) {
-        case CycleActionTypes.PLAY:
+        case CycleActionTypes.PLAY: {
             return { ...state, isPlaying: true }
-        case CycleActionTypes.PAUSE: 
+        }
+        case CycleActionTypes.PAUSE: {
             return { ...state, isPlaying: false }
-        case CycleActionTypes.TOGGLE_PLAY:
+        }
+        case CycleActionTypes.TOGGLE_PLAY: {
             const isPlaying: boolean = !state.isPlaying
             return { ...state, isPlaying }
+        }
+        case CycleActionTypes.SET_PROGRESS: {
+            if ( !payload ) return state
+            const { progress } = payload
+            return { ...state, progress }
+        }
     }
 }
 

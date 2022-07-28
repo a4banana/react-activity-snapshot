@@ -1,7 +1,6 @@
 import './ProgressIndicator.sass'
-import { SyntheticEvent, useState } from 'react'
-
-const CIRCLE_SIZE: number = 16
+import { SyntheticEvent, useContext, useEffect, useState, useRef } from 'react'
+import { CycleContext } from '../../contexts/cycleContext'
 
 interface ComponentTransitionEvent<T = Element> extends SyntheticEvent<T, TransitionEvent> {
     elapsedTime: number;
@@ -10,15 +9,30 @@ interface ComponentTransitionEvent<T = Element> extends SyntheticEvent<T, Transi
 }
 
 export default function ProgressIndicator() {
+    const CIRCLE_SIZE: number = 16
     const isLoading = false
-    const isPlaying = false
-    const progress = 50
+    const isPlaying = true
+    const circle = useRef<SVGCircleElement>( null )
+    
+    const { progress } = useContext( CycleContext )
+
 
     const [ strokeWidth, setStrokeWidth ] = useState( 2.8 )
     const radius: number = CIRCLE_SIZE - ( strokeWidth / 2 )
     const dashArray: number = radius * Math.PI * 2
     const reverseOffset: number = -dashArray
-    const progressToOffset: number = dashArray - ( dashArray * progress / 100 )
+    
+    const styleText = {
+        strokeDashoffset: dashArray - ( dashArray * progress / 100 )
+    }
+
+    // useEffect(() => {
+    //     const progressToOffset: number = dashArray - ( dashArray * progress / 100 )
+        
+    //     // circle.current?.setAttribute( 'storke-dashoffset', progressToOffset.toString() )
+    // }, [ progress ])
+    // console.log( progress )
+
 
     function transitionEndHandler( event: ComponentTransitionEvent<SVGCircleElement> ): void {
         console.log( event )
@@ -32,8 +46,13 @@ export default function ProgressIndicator() {
 
     return (
         <svg className={ classes } viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } className="track"></circle>
-            <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } onTransitionEnd={ transitionEndHandler } className="thumb"></circle>
+            <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius } className="track"></circle>
+            <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius }
+                ref={ circle }
+                style={ styleText }
+                onTransitionEnd={ transitionEndHandler }
+                // strokeDashoffset={ progressToOffset }
+                className="thumb"></circle>
         </svg>
     )
 }
