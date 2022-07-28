@@ -4,10 +4,9 @@
     transform: rotate( -90deg )
 
     &.is-playing
-        .track, .thumb
-            stroke-width: 2.8
         .thumb
             fill: none
+            stroke: var( --color-text-primary )
             transition: stroke-width .33s $quintIn
     
     &.is-preparing
@@ -15,21 +14,15 @@
             // stroke-dashoffset: v-bind( reverseOffset )
             transition: stroke-dashoffset 2s $sineOut
 
-.track, .thumb
-    stroke-width: calc( 2.8 / 3 )
-    transition: stroke-width .33s $quintIn
+    .track, .thumb
+        transition: stroke-width .33s $quintIn
 
-.thumb
-    fill: var( --color-text-quaternary )
-    transition: fill .24s
-    stroke: var( --color-text-secondary )
-    // stroke-dasharray: v-bind( dashArray )
-    stroke-linecap: butt
-
-.track
-    fill: none
-    stroke: var( --color-text-quaternary )
-
-.is-playing
     .thumb
-        stroke: var( --color-text-primary )
+        fill: var( --color-text-quaternary )
+        transition: fill .24s
+        stroke: var( --color-text-secondary )
+        stroke-linecap: butt
+
+    .track
+        fill: none
+        stroke: var( --color-text-quaternary )

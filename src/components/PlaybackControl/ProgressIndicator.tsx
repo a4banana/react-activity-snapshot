@@ -10,6 +10,8 @@ interface ComponentTransitionEvent<T = Element> extends SyntheticEvent<T, Transi
 
 export default function ProgressIndicator() {
     const CIRCLE_SIZE: number = 16
+    const STORKE_WIDTH: number = 2.8
+
     const isLoading = false
     const isPlaying = true
     const circle = useRef<SVGCircleElement>( null )
@@ -17,13 +19,14 @@ export default function ProgressIndicator() {
     const { progress } = useContext( CycleContext )
 
 
-    const [ strokeWidth, setStrokeWidth ] = useState( 2.8 )
+    const strokeWidth = isPlaying ? STORKE_WIDTH : STORKE_WIDTH / 3 
     const radius: number = CIRCLE_SIZE - ( strokeWidth / 2 )
     const dashArray: number = radius * Math.PI * 2
     const reverseOffset: number = -dashArray
+    const progressToOffset = dashArray - ( dashArray * progress / 100 )
     
     const styleText = {
-        strokeDashoffset: dashArray - ( dashArray * progress / 100 )
+        strokeDashoffset: dashArray
     }
 
     // useEffect(() => {
@@ -40,18 +43,21 @@ export default function ProgressIndicator() {
 
     const classes = [
         'indicator-svg',
-        ( isLoading ? 'is-loading' : '' ),
         ( isPlaying ? 'is-playing' : '' ),
+        ( isLoading ? 'is-loading' : '' ),
     ].join( ' ' )
 
     return (
         <svg className={ classes } viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius } className="track"></circle>
+            <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius }
+                strokeWidth={ strokeWidth }
+                className="track"></circle>
             <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius }
                 ref={ circle }
-                style={ styleText }
+                // style={ styleText }
+                strokeWidth={ strokeWidth }
                 onTransitionEnd={ transitionEndHandler }
-                // strokeDashoffset={ progressToOffset }
+                strokeDashoffset={ progressToOffset }
                 className="thumb"></circle>
         </svg>
     )

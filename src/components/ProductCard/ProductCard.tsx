@@ -7,7 +7,7 @@ interface Props {
     clickHandler: ( event: any, id: number ) => void
 }
 
-export default function ProductCard({ product: { id, image, name, index, count, selected, disabled }, clickHandler }: Props ) {
+export default function ProductCard({ product: { id, image, name, count, selected, disabled }, clickHandler }: Props ) {
     // unused prop: index
     const [ isPressing, setIsPressing ] = useState( false )
     const [ isBlank, setIsBlank ] = useState( false )

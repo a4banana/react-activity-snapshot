@@ -1,0 +1,19 @@
+@import '../../assets/easings'
+
+.day-count
+    font-weight: 600
+    height: 52px
+    letter-spacing: -1.4px
+    font-feature-settings: 'tnum' on, 'lnum' on
+    position: relative
+    overflow: hidden
+
+    .day-screen
+        transform: translateY( 0 )
+        
+        div
+            line-height: 1
+
+        &.active
+            transform: translateY( calc( -100% + 52px ))
+            transition: transform 1s $sineOut

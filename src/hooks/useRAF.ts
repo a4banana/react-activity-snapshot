@@ -30,6 +30,7 @@ export default function useRAF(): IUseRAF {
     }
 
     function done() {
+        console.log( 'done!' )
         start = null
         elapsed = 0
         previous = 0
