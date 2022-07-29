@@ -8,7 +8,7 @@ export enum CycleActionTypes {
     TOGGLE_PLAY, 
     PAUSE,
     PLAY,
-    SET_PROGRESS
+    LOADING,
 }
 
 type CycleState = {
@@ -28,8 +28,7 @@ export interface CycleAction {
 const initialState: CycleState = {
     cycle: 0, 
     isPlaying: true,
-    isLoading: false,
-    progress: 0
+    isLoading: false
 }
 
 function cycleReducer( state: CycleState, { type, payload }: CycleAction ): CycleState {
@@ -43,11 +42,6 @@ function cycleReducer( state: CycleState, { type, payload }: CycleAction ): Cycl
         case CycleActionTypes.TOGGLE_PLAY: {
             const isPlaying: boolean = !state.isPlaying
             return { ...state, isPlaying }
-        }
-        case CycleActionTypes.SET_PROGRESS: {
-            if ( !payload ) return state
-            const { progress } = payload
-            return { ...state, progress }
         }
     }
 }
