@@ -12,6 +12,7 @@ import TextInformation from './components/TextInformations/TextInformation'
 
 // this for dev
 import useFetch from './hooks/useFetch'
+import { ProgressProvider } from './contexts/progressContext'
 const GEO_JSON_URI: string = './custom.geojson'
 
 export default function App() {
@@ -23,7 +24,7 @@ export default function App() {
 	}, [ geoJSON ])
 	
 	return (
-		<CycleProvider><QueuesProvider><InquiryProvider>
+		<CycleProvider><QueuesProvider><InquiryProvider><ProgressProvider>
 			<div id="activity-snapshot">
 				<h1 className='service-title'>Activity Snapshot</h1>
 				<TextInformation />
@@ -31,6 +32,6 @@ export default function App() {
 				<TridgeGlobe />
 				<ProductCardList />
 			</div>
-		</InquiryProvider></QueuesProvider></CycleProvider>
+		</ProgressProvider></InquiryProvider></QueuesProvider></CycleProvider>
 	)
 }

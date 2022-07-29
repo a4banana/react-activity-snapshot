@@ -1,9 +1,10 @@
+import { ProgressDispatchContext, ProgressActionTypes } from './../contexts/progressContext';
 import { CycleActionTypes } from './../contexts/cycleContext';
 import { useContext, useState, useEffect, useRef, MutableRefObject } from "react"
 import { CycleContext, CycleDispatchContext } from "../contexts/cycleContext"
 
 interface IUseRAF {
-    frame: ( timestamp: number ) => void
+    // frame: ( timestamp: number ) => void
     run: () => void
 }
 
@@ -17,48 +18,49 @@ export default function useRAF(): IUseRAF {
     const start: MutableRefObject<number | null> = useRef( null )
     const elapsed: MutableRefObject<number> = useRef( 0 )
     const previous: MutableRefObject<number> = useRef( 0 )
-    const [ runn, setRunn ] = useState( false )
+    const rafId: MutableRefObject<number | null> = useRef( null )
     
     const { isPlaying } = useContext( CycleContext )
-    const dispatch = useContext( CycleDispatchContext )
+    const dispatch = useContext( ProgressDispatchContext )
+    const _isPlaying: MutableRefObject<boolean> = useRef( isPlaying )
 
-    function frame( timestamp: number ) {
-        if ( !start.current ) start.current = timestamp;
-        // if ( !isPlaying ) previous.current = timestamp - start.current - elapsed.current
-        // previous.current = timestamp - start.current - elapsed.current;
-        // console.log( isPlaying )
+    function done() {
+        
+        start.current = 0
+        elapsed.current = 0
+        previous.current = 0
+        rafId.current = null
+
+        dispatch({ type: ProgressActionTypes.SET_PROGRESS, value: 0 })
+    }
+
+    const frame = ( timestamp: number ) => {
+        if ( !start.current ) start.current = timestamp
+        if ( !_isPlaying.current ) previous.current = timestamp - start.current - elapsed.current;
         elapsed.current = timestamp - start.current - previous.current;
         let progress = elapsed.current / CYCLE_SPEED * 100;
-        // console.log( progress );
-        // console.log( start.current, previous.current, elapsed.current, progress );
-        
-        // this line might bring performance issue
-        // dispatch({ type: CycleActionTypes.SET_PROGRESS, payload: { progress }});
 
+        dispatch({ type: ProgressActionTypes.SET_PROGRESS, value: progress });
+        // console.log( progress )
         ( elapsed.current <= CYCLE_SPEED )
-            ? window.requestAnimationFrame( frame )
+            ? rafId.current = window.requestAnimationFrame( frame )
             : done()
     }
 
-    function done() {
-        console.log( 'done!' )
-        // start = null
-        // elapsed = 0
-        // previous = 0
-        dispatch({ type: CycleActionTypes.SET_PROGRESS, payload: { progress: 0 }})
-    }
+    useEffect(() => {
+        rafId.current = window.requestAnimationFrame( frame )
+        return () => window.cancelAnimationFrame( rafId.current! )
+    }, [])
 
     useEffect(() => {
-        
-
+        _isPlaying.current = isPlaying
     }, [ isPlaying ])
 
     function run() {
-        setRunn( true )
+        
     }
 
     return {
-        frame,
         run
     }
 }

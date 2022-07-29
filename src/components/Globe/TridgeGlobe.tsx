@@ -8,9 +8,8 @@ export default function TridgeGlobe() {
     const dispatch = useContext( QueuesDispatchContext )
     const { isPlaying } = useContext( CycleContext )
 
-    const { frame, run } = useRAF()
-
-    useEffect(() => { run() }, [])
+    const { run } = useRAF()
+    // useEffect(() => { run() }, [])
     // useEffect(() => { console.log( isPlaying ) }, [ isPlaying ])
 
     return (
