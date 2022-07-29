@@ -6,10 +6,12 @@ import useRAF from '../../hooks/useRAF'
 export default function TridgeGlobe() {
     const queues = useContext( QueuesContext )
     const dispatch = useContext( QueuesDispatchContext )
+    const { isPlaying } = useContext( CycleContext )
 
-    const { frame } = useRAF()
+    const { frame, run } = useRAF()
 
-    useEffect(() => { frame( 0 ) }, [])
+    useEffect(() => { run() }, [])
+    // useEffect(() => { console.log( isPlaying ) }, [ isPlaying ])
 
     return (
         <div id="tridge-globe">

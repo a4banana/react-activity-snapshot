@@ -13,29 +13,14 @@ export default function ProgressIndicator() {
     const STORKE_WIDTH: number = 2.8
 
     const isLoading = false
-    const isPlaying = true
-    const circle = useRef<SVGCircleElement>( null )
     
-    const { progress } = useContext( CycleContext )
-
+    const { progress, isPlaying } = useContext( CycleContext )
 
     const strokeWidth = isPlaying ? STORKE_WIDTH : STORKE_WIDTH / 3 
     const radius: number = CIRCLE_SIZE - ( strokeWidth / 2 )
     const dashArray: number = radius * Math.PI * 2
     const reverseOffset: number = -dashArray
     const progressToOffset = dashArray - ( dashArray * progress / 100 )
-    
-    const styleText = {
-        strokeDashoffset: dashArray
-    }
-
-    // useEffect(() => {
-    //     const progressToOffset: number = dashArray - ( dashArray * progress / 100 )
-        
-    //     // circle.current?.setAttribute( 'storke-dashoffset', progressToOffset.toString() )
-    // }, [ progress ])
-    // console.log( progress )
-
 
     function transitionEndHandler( event: ComponentTransitionEvent<SVGCircleElement> ): void {
         console.log( event )
@@ -53,8 +38,7 @@ export default function ProgressIndicator() {
                 strokeWidth={ strokeWidth }
                 className="track"></circle>
             <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius }
-                ref={ circle }
-                // style={ styleText }
+                strokeDasharray={ dashArray }
                 strokeWidth={ strokeWidth }
                 onTransitionEnd={ transitionEndHandler }
                 strokeDashoffset={ progressToOffset }

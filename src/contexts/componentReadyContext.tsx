@@ -2,7 +2,7 @@ import { createContext, useReducer } from "react";
 import type { Dispatch, ReactNode } from "react";
 
 export const QueuesContext = createContext<QueuesContext | null>( null )
-export const QueuesDispatchContext = createContext<Dispatch<QueuesAction> | null>( null )
+export const QueuesDispatchContext = createContext<Dispatch<QueuesActions> | null>( null )
 
 export enum QueuesActionType {
     INIT_QUEUE,
@@ -17,41 +17,50 @@ type Queue = {
 
 type QueueCollection = Array<Queue>
 
-interface QueuesContext {
+type QueuesContext = {
     isAllDone: boolean
     queues: QueueCollection
 }
 
-export interface QueuesAction {
-    type: QueuesActionType;
-    payload?: Queue | undefined
+interface ActionWithPayload {
+    type: QueuesActionType.ADD_QUEUE | QueuesActionType.DONE_QUEUE
+    payload: Queue
 }
+
+interface ActionWithoutPayload {
+    type: QueuesActionType.INIT_QUEUE
+}
+
+type QueuesActions = ActionWithPayload | ActionWithoutPayload
 
 const initialState: QueuesContext = {
     isAllDone: true,
     queues: []
 }
 
-const hasKey = ( queues: QueueCollection, key: string ) => queues.some(( queue: Queue ) => queue.key === key )
+// const hasKey = ( queues: QueueCollection, key: string ) => queues.some(( queue: Queue ) => queue.key === key )
+const matchKeyAndIsDone = ( queue: Queue, key: string ): boolean => queue.key === key && !queue.isDone
 
-function queuesReducer( state: QueuesContext, { type, payload }: QueuesAction ): QueuesContext {
+function queuesReducer( state: QueuesContext, action: QueuesActions ): QueuesContext {
+    const { type } = action
+    
     switch ( type ) {
-        case QueuesActionType.INIT_QUEUE:
+        case QueuesActionType.INIT_QUEUE: {
             return { isAllDone: true, queues: [] }
+        }
         case QueuesActionType.ADD_QUEUE: {
-            if ( !payload ) return state
-            const { key } = payload
+            const { key } = action.payload
             return {
                 ...state,
                 queues: [ ...state.queues, { key, isDone: false }]
             }
         }
         case QueuesActionType.DONE_QUEUE: {
-            if ( !payload ) return state
-            const { key } = payload
-            if ( !hasKey( state.queues, key )) console.error( key + ' has never queued.' )
             return { ...state,
-                queues: state.queues.map(( queue: Queue ) => ( queue.key === key && !queue.isDone ) ? { ...queue, isDone: true } : queue )
+                queues: state.queues.map(( queue: Queue ) => 
+                    matchKeyAndIsDone( queue, action.payload.key )
+                        ? { ...queue, isDone: true } : queue
+                )
             }
         }
     }
@@ -59,7 +68,7 @@ function queuesReducer( state: QueuesContext, { type, payload }: QueuesAction ):
 
 export function QueuesProvider({ children }: { children: ReactNode }) {
     const [ queues, dispatch ] = useReducer( queuesReducer, initialState );
-    
+
     return (
         <QueuesContext.Provider value={ queues }>
             <QueuesDispatchContext.Provider value={ dispatch }>

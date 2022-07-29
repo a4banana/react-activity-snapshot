@@ -1,12 +1,15 @@
 import './PlayAndPause.sass'
 import ProgressIndicator from './ProgressIndicator'
+import { useContext } from 'react'
+import { CycleContext, CycleDispatchContext, CycleActionTypes } from '../../contexts/cycleContext'
 
 export interface PlayAndPauseProps {
     isLoaded: boolean
 }
 
 export default function PlayAndPause({ isLoaded }: PlayAndPauseProps) {
-    const isPlaying: boolean = false
+    const { isPlaying } = useContext( CycleContext )
+    const dispatch = useContext( CycleDispatchContext )
     
     const classes = () => {
         const _default = [ 'play-and-pause' ]
@@ -18,7 +21,7 @@ export default function PlayAndPause({ isLoaded }: PlayAndPauseProps) {
     }
 
     function clickHandler() {
-        console.log( 'clicked' )
+        dispatch({ type: CycleActionTypes.TOGGLE_PLAY })
     }
 
     return (
