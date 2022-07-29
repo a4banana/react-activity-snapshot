@@ -24,7 +24,6 @@ export default function useProducts( inquiries: Array<BuyerInquirySellerForWorld
     }
 }
 
-
 function hasProduct( products: ProductCollection, id: number ): boolean {
     return products.some(( p: IProduct ) => p.id === id )
 }
@@ -44,10 +43,7 @@ function sortProductByCount( a: IProduct, b: IProduct ): number {
 // inquiries to products colleciton ( create or update )
 function productsReducer(
     acc: ProductCollection,
-    { product }: BuyerInquirySellerForWorldMapType ): ProductCollection {
-
-    acc = ( !hasProduct( acc, product.id ))
-        ? createProduct( acc, product ) : updateProduct( acc, product.id )
-        
-    return acc
+    { product }: BuyerInquirySellerForWorldMapType
+): ProductCollection {
+    return ( !hasProduct( acc, product.id )) ? createProduct( acc, product ) : updateProduct( acc, product.id )
 }

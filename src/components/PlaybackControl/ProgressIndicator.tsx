@@ -12,7 +12,7 @@ export default function ProgressIndicator() {
     const CIRCLE_SIZE: number = 16
     const STORKE_WIDTH: number = 2.8
 
-    const isLoading = false
+    const isLoading = true
     
     const { progress, isPlaying } = useContext( CycleContext )
 
