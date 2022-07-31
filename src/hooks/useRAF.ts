@@ -21,17 +21,16 @@ export default function useRAF(): IUseRAF {
     const rafId: MutableRefObject<number | null> = useRef( null )
     
     const { isPlaying } = useContext( CycleContext )
-    const dispatch = useContext( ProgressDispatchContext )
+    const dispatchProgress = useContext( ProgressDispatchContext )
     const _isPlaying: MutableRefObject<boolean> = useRef( isPlaying )
 
     function done() {
-        
         start.current = 0
         elapsed.current = 0
         previous.current = 0
         rafId.current = null
 
-        dispatch({ type: ProgressActionTypes.SET_PROGRESS, value: 0 })
+        dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: 0 })
     }
 
     const frame = ( timestamp: number ) => {
@@ -40,8 +39,7 @@ export default function useRAF(): IUseRAF {
         elapsed.current = timestamp - start.current - previous.current;
         let progress = elapsed.current / CYCLE_SPEED * 100;
 
-        dispatch({ type: ProgressActionTypes.SET_PROGRESS, value: progress });
-        // console.log( progress )
+        dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: progress });
         ( elapsed.current <= CYCLE_SPEED )
             ? rafId.current = window.requestAnimationFrame( frame )
             : done()

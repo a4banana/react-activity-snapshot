@@ -11,17 +11,9 @@ import ProductCardList from './components/ProductCard/ProductCardList'
 import TextInformation from './components/TextInformations/TextInformation'
 
 // this for dev
-import useFetch from './hooks/useFetch'
 import { ProgressProvider } from './contexts/progressContext'
-const GEO_JSON_URI: string = './custom.geojson'
 
 export default function App() {
-	const { data: geoJSON, isLoading } = useFetch<FeatureCollection>( GEO_JSON_URI )
-
-	// on Mounted
-	useEffect(() => {
-		if ( geoJSON ) console.log( geoJSON )
-	}, [ geoJSON ])
 	
 	return (
 		<CycleProvider><QueuesProvider><InquiryProvider><ProgressProvider>

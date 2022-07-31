@@ -15,7 +15,6 @@ type CycleState = {
     cycle: number
     isPlaying: boolean
     isLoading: boolean
-    progress: number
 }
 
 export interface CycleAction {
@@ -40,8 +39,11 @@ function cycleReducer( state: CycleState, { type, payload }: CycleAction ): Cycl
             return { ...state, isPlaying: false }
         }
         case CycleActionTypes.TOGGLE_PLAY: {
-            const isPlaying: boolean = !state.isPlaying
+            let isPlaying: boolean = !state.isPlaying
             return { ...state, isPlaying }
+        }
+        default: {
+            throw new Error( 'no action type' )
         }
     }
 }
