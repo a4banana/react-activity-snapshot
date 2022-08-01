@@ -31,18 +31,22 @@ interface InquiryData {
     products: number
 }
 
+
+// this type has changed via dev mode
 type BuyerInquirySellerForWorldMapList = {
 	inquiries: Array<BuyerInquirySellerForWorldMapType>
-	count: string
-	cursorDate: Date
+	count: number
+	cursorDate: string
+    __typename?: string
 }
 
 type BuyerInquirySellerForWorldMapType = {
-	id: string
+	id: number
 	sellerCountry: string
 	buyerCountry: string
 	product: Product
-	createdAt: Date
+	createdAt: string
+    __typename?: string
 }
 
 type Queue = {

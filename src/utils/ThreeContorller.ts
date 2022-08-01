@@ -8,11 +8,24 @@ import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
 import { gsap } from 'gsap'
 import { chunk } from 'lodash-es'
 import { getPixelsPerDegree } from './PolarAndCartesian'
-import useCountry from '../hooks/useCountry'
+import { FeatureCollection } from 'geojson'
+
+import CountryPoint from './DrawCountryPoint'
 
 type Rendereres = Array<WebGLRenderer | CSS3DRenderer>
 
-export default function ThreeController( inquiries: Array<BuyerInquirySellerForWorldMapType> ) {
+export type ThreeControllerType = {
+	renderers: Rendereres
+	scene: Scene
+	cam: PerspectiveCamera
+	globe: ThreeGlobe
+	interactionManager: InteractionManager
+	init: () => void
+	drawCountryPolygon: ( geojson: FeatureCollection ) => void
+	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement ) => void
+}
+
+export default function ThreeController(): ThreeControllerType {
 	const LIGHT_COLOR: number = 0xFFFFFF
 	const SCREEN_WIDTH: number = 1184
     const SCREEN_HEIGHT: number = 666
@@ -29,6 +42,10 @@ export default function ThreeController( inquiries: Array<BuyerInquirySellerForW
 	const globe: ThreeGlobe = new ThreeGlobe()
 	const obControl: OrbitControls = new OrbitControls( cam, webGLRenderer.domElement )
 	const interactionManager: InteractionManager = new InteractionManager( webGLRenderer, cam, webGLRenderer.domElement, undefined )
+	
+	const countryPoint = CountryPoint( interactionManager, cam, obControl )
+	const { drawCountryPoint } = countryPoint;
+	const pointGroup: Group = new Group()
 
 	function render( timestamp: number ): void {
 		obControl.update()
@@ -46,7 +63,7 @@ export default function ThreeController( inquiries: Array<BuyerInquirySellerForW
 		scene.add( globe )
 		scene.add( new AmbientLight( LIGHT_COLOR, 1 ))
 		scene.add( new DirectionalLight( LIGHT_COLOR, .5 ))
-
+		
 		// set Camera
 		setCamera( cam, SCREEN_WIDTH, SCREEN_HEIGHT, CAM_INITIAL_Z )
 		// set OrbitControl
@@ -60,7 +77,8 @@ export default function ThreeController( inquiries: Array<BuyerInquirySellerForW
 		})
 
 		// scene.add( focusedLineGroup )
-		// scene.add( focusedPointGroup )
+		// scene.add( focusedPointGroup 
+		scene.add( pointGroup )
 
 		// init and set Renderer
 		setRenderersSize( renderers, SCREEN_WIDTH, SCREEN_HEIGHT )
@@ -69,18 +87,24 @@ export default function ThreeController( inquiries: Array<BuyerInquirySellerForW
 		window.requestAnimationFrame( render )
 	}
 
+	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement ) => {
+		pointGroup.children = []
+		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom )))
+	}
+
+	const drawCountryPolygon = ( geojson: FeatureCollection ): void => drawHexPolygons( globe, geojson )
+
 	return {
 		renderers, scene, cam, globe, interactionManager,
-		init
+		init, drawCountryPolygon, drawCountryPoints
 	}
 }
 
-
-function generateArcsAndPoints( globe: ThreeGlobe, inquiries: any ) {
+function generateArcsAndPoints( globe: ThreeGlobe, countries: CountryDataCollection, pointGroup: Group ) {
 	// // remove points from interaction manager
 	// pointGroup.children.forEach( child => interactionManager.remove( child ))
 	// // reset Three Point Group
-	// pointGroup.children = []
+	pointGroup.children = []
 	// // reset current point Data
 	// resetCountries()
 	// // reest Three Line Group
@@ -94,19 +118,26 @@ function generateArcsAndPoints( globe: ThreeGlobe, inquiries: any ) {
 	// sellers.forEach( country => createOrUpdateCountry( country ))
 	// buyers.forEach( country => createOrUpdateCountry( country ))
 
-	// countries.value.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom.value ) ))
+	countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom.value ) ))
 
 	// arc
-	const seg = 3
-	const gap = .5
-	const segTime = CycleProperties.Speed / seg
-	const segDelay = segTime * gap
-	const segDuration = ( i: number ) => segDelay * i * 2;
+	// const seg = 3
+	// const gap = .5
+	// const segTime = CycleProperties.Speed / seg
+	// const segDelay = segTime * gap
+	// const segDuration = ( i: number ) => segDelay * i * 2;
 	
-	const chunkCount: number = Math.ceil( inquiries.value.length / seg )
-	const chunks = chunk( inquiries.value, chunkCount )
+	// const chunkCount: number = Math.ceil( inquiries.value.length / seg )
+	// const chunks = chunk( inquiries.value, chunkCount )
 }
 
+
+const drawHexPolygons = ( globe: ThreeGlobe, { features }: FeatureCollection ): void => {
+	globe.hexPolygonsData( features )
+		.hexPolygonResolution( 3 )
+		.hexPolygonMargin( .7 )
+		.hexPolygonColor(() => '#3d3d3d' )
+}
 
 const setCamera = ( cam: PerspectiveCamera, width: number, height: number, CAM_INITIAL_Z: number ): void => {
 	cam.aspect = width / height

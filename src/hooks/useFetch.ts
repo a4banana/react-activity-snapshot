@@ -51,17 +51,15 @@ export default function useFetch<T = unknown>( uri: string ): State<T> {
 
     useEffect(() => {
         const fetchData = async () => {
-            console.log( 'fetch! async' )
             dispatch({ type: ActionTypes.LOADING })
-            // isLoading.current = true
-            
+
             try {
                 const res = await fetch( uri )
                 if ( !res.ok ) throw new Error( res.statusText )
 
                 const data = ( await res.json() ) as T
-
                 dispatch({ type: ActionTypes.FETCHED, payload: data })
+                
             } catch ( err ) {
                 console.error( err )
                 dispatch({ type: ActionTypes.ERROR, payload: err as Error })

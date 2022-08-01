@@ -13,8 +13,6 @@ export default function ProductCardList() {
         
     // }, [])
 
-    console.log( 'check re rendering' )
-
     const clickHandler = ( event: any, id: number ) => {
         toggleProduct( id )
     }
