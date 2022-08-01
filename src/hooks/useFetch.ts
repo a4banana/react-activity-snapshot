@@ -1,27 +1,77 @@
-import { useState, useEffect } from "react";
+import { useRef, useEffect, useReducer } from "react";
+import type { MutableRefObject } from "react";
 
-export default function useFetch<T = unknown>( uri: string ): { data: T | undefined, isLoading: boolean } {
-    const [ isLoading, setIsLoading ] = useState<boolean>( false )
-    const [ data, setData ] = useState<T>()
+enum ActionTypes {
+    LOADING,
+    FETCHED,
+    ERROR
+}
+
+interface State<T> {
+    data?: T
+    error?: Error
+}
+
+interface ActionLoading {
+    type: ActionTypes.LOADING
+}
+
+interface ActionFetch<T> {
+    type: ActionTypes.FETCHED,
+    payload: T
+}
+
+interface ActionError<T> {
+    type: ActionTypes.ERROR,
+    payload: Error
+}
+
+type FetchAction<T> = ActionLoading | ActionFetch<T> | ActionError<T>
+
+export default function useFetch<T = unknown>( uri: string ): State<T> {
+    const isLoading: MutableRefObject<boolean> = useRef( false )
+    const initialState: State<T> = {
+        data: undefined,
+        error: undefined
+    }
+
+    const fetchReducer = ( state: State<T>, action: FetchAction<T> ): State<T> => {
+        switch( action.type ) {
+            case ActionTypes.LOADING:
+                return { ...initialState }
+            case ActionTypes.FETCHED:
+                return { ...initialState, data: action.payload }
+            case ActionTypes.ERROR:
+                return { ...initialState, error: action.payload }
+            default:
+                return state
+        }
+    }
+    const [ state, dispatch ] = useReducer( fetchReducer, initialState )
 
     useEffect(() => {
         const fetchData = async () => {
-            setIsLoading( true )
-    
+            console.log( 'fetch! async' )
+            dispatch({ type: ActionTypes.LOADING })
+            // isLoading.current = true
+            
             try {
                 const res = await fetch( uri )
                 if ( !res.ok ) throw new Error( res.statusText )
-                setData( ( await res.json() ) as T )
+
+                const data = ( await res.json() ) as T
+
+                dispatch({ type: ActionTypes.FETCHED, payload: data })
             } catch ( err ) {
                 console.error( err )
+                dispatch({ type: ActionTypes.ERROR, payload: err as Error })
             } finally {
-                setIsLoading( false )
+                isLoading.current = false
             }
         }
 
         void fetchData()
-        
     }, [ uri ])
 
-    return { data, isLoading }
+    return state
 }

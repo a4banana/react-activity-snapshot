@@ -1,14 +1,10 @@
 import { Mesh, CircleBufferGeometry, MeshBasicMaterial, Vector3, Camera } from 'three'
-import { polar2Cartesian, getPixelsPerDegree } from '@/utils/PolarAndCartesian'
+import { polar2Cartesian, getPixelsPerDegree } from './PolarAndCartesian'
 import { InteractionManager } from 'three.interactive'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { useInquiryDataStore } from '@/stores/useInquiryDataStore'
 import gsap from 'gsap'
 
 export default function CountryPoint( interactionManager: InteractionManager, cam: Camera, obControl: OrbitControls ) {
-	const inquiryStore = useInquiryDataStore()
-	const { toggleCountry } = inquiryStore
-
 	const COUNTRY_POINT_COLOR: number = 0x6EA1ED
 	const COUNTRY_OPACITY: number = .6
 	const COUNTRY_POINT_ALT: number = .01
@@ -63,7 +59,7 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 		const point_distance: number = point.distanceTo( center )
 		const { x, y, z }: Vector3 = point.clone().multiplyScalar( cam_distance / point_distance )
 		// select country
-		if ( event.target.parent.visible ) toggleCountry( country )
+		// if ( event.target.parent.visible ) toggleCountry( country )
 		// cam move
 		gsap.to( obControl.object.position, { x, y, z, duration: .66, ease: 'sine.out' })
 	}
