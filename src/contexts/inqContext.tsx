@@ -18,15 +18,6 @@ type InquiryState = BuyerInquirySellerForWorldMapList
 
 const initialState: InquiryState = inqData as BuyerInquirySellerForWorldMapList
 
-/*
-Conversion of type '{ cursorDate: string; count: number; inquiries: { id: number; sellerCountry: string; buyerCountry: string; product: { id: number; name: string; image: string; __typename: string; }; createdAt: string; __typename: string; }[]; __typename: string; }' to type 'BuyerInquirySellerForWorldMapList' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Types of property 'inquiries' are incompatible.
-    Type '{ id: number; sellerCountry: string; buyerCountry: string; product: { id: number; name: string; image: string; __typename: string; }; createdAt: string; __typename: string; }[]' is not comparable to type 'BuyerInquirySellerForWorldMapType[]'.
-      Type '{ id: number; sellerCountry: string; buyerCountry: string; product: { id: number; name: string; image: string; __typename: string; }; createdAt: string; __typename: string; }' is not comparable to type 'BuyerInquirySellerForWorldMapType'.
-        Types of property 'id' are incompatible.
-          Type 'number' is not comparable to type 'string'.
-*/
-
 export const InquiryContext = createContext<InquiryState | null>( null )
 export const InquiryDispatchContext = createContext<Dispatch<InquiryAction> | null>( null )
 

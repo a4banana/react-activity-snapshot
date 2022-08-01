@@ -19,21 +19,17 @@ const TridgeGlobe = memo(() => {
     // const dispatch = useContext( QueuesDispatchContext )
     // const { isPlaying } = useContext( CycleContext )
     const GEO_JSON_URI: string = './custom.geojson'
-    // const { data: geojson } = useFetch<FeatureCollection>( GEO_JSON_URI )
     const { data: geojson } = useFetch<FeatureCollection>( GEO_JSON_URI )
     
     const canvasDom = useRef< HTMLDivElement | null >( null )
     const inquiryContext = useContext( InquiryContext )
     const { initCountries, countries } = useCountry( inquiryContext!.inquiries as Array<BuyerInquirySellerForWorldMapType> )
-
-    const threeController: MutableRefObject<ThreeControllerType | undefined> = useRef()
+    const threeController: MutableRefObject<ThreeControllerType | null> = useRef( null )
     
     useEffect(() => {
-        // console.log( 'only once?' )
-        threeController.current = ThreeController();
+        threeController.current = ThreeController()
+
     }, [])
-        
-    console.log( 'check re rendering' )
 
     // after fetch geojson
     useEffect(() => {
@@ -47,7 +43,7 @@ const TridgeGlobe = memo(() => {
 
             // init threejs
             init()
-            setTimeout( () => { initCountries( geojson.features!, globe )}, 150 )
+            setTimeout( () => { initCountries( geojson.features, globe )}, 150 )
         }
     }, [ geojson ])
 

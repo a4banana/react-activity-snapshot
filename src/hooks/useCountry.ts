@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, MutableRefObject } from "react"
 import type ThreeGlobe from 'three-globe';
-import type { Feature, FeatureCollection } from "geojson"
+import type { Feature, Geometry } from "geojson"
+import type { Mesh } from "three";
 
 interface IUseCountry {
     countries: CountryDataCollection
@@ -11,17 +12,17 @@ interface State {
     countries: CountryDataCollection
 }
 
-const initialState: State = {
-    countries: []
-}
-
-interface GeoJSONProeperties {
+type GeoJsonProperties = {
     [ name: string ]: any
 }
 
-interface Feature {
-    __threeObj: any
-    properties: GeoJSONProeperties
+interface FeatureWithThree extends Feature {
+    __threeObj: Mesh
+}
+
+type CountryGeoCoods = {
+    position: GeoPosition
+    name: string
 }
 
 // useProducts Hook
@@ -31,7 +32,6 @@ export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldM
     function initCountries( geojson: Array<Feature>, globe: ThreeGlobe ) {
         const uniqCountries = countryDataByUniqCountries( inquiries )
         
-        // console.log( geojson )
         const _countries = uniqCountries.reduce<CountryDataCollection>(
             ( acc: CountryDataCollection, iso_a2: string ): CountryDataCollection => {
             if ( !hasCountry( acc, iso_a2 ) ) {
@@ -70,17 +70,12 @@ const createCountry = ( iso_a2: string, name: string, position: GeoPosition ): C
     return { iso_a2, name, position, selected, disabled }
 }
 
-type CountryGeoCoods = {
-    position: GeoPosition
-    name: string
-}
-
 const getCountryGeoCoods = ( features: Array<Feature>, iso_a2: string, globe: ThreeGlobe): CountryGeoCoods | void => {
 	const feature: Feature | null = _getCountryByCode( features, iso_a2 )
 
 	if ( feature && _hasFeatureAndThreeObj( feature, iso_a2 ) ) {
-		const { name } = feature.properties
-		const { x, y, z } = feature.__threeObj.geometry.boundingSphere.center
+		const { name } = feature.properties as GeoJsonProperties
+		const { x, y, z } = ( feature as FeatureWithThree ).__threeObj.geometry.boundingSphere!.center
 
 		if ( _isValidCoord( { x, y, z }, iso_a2, name )) {
 			const { lat, lng, altitude: alt } = globe.toGeoCoords({ x, y, z })
@@ -93,8 +88,7 @@ const getCountryGeoCoods = ( features: Array<Feature>, iso_a2: string, globe: Th
 }
 
 const _getCountryByCode = ( features: Array<Feature>, iso_a2: string ) => {
-	const country = features.find(( g: Feature ) => g.properties!.iso_a2 === iso_a2 ) || null
-	return country
+	return features.find(( g: Feature ) => g.properties!.iso_a2 === iso_a2 ) || null
 }
 
 const _hasFeatureAndThreeObj = ( feature: Feature, iso_a2: string ): boolean => {

@@ -1,6 +1,5 @@
 import { BufferGeometry, ShaderMaterial, Line, NormalBlending } from 'three'
 import { calcColorVertexArray, calcVertexRelDistances, calcCurve } from './CalcCurve'
-import gsap from 'gsap'
 
 const vertexShader: string = "\n    uniform float dashTranslate; \n\n    attribute vec4 vertexColor;\n    varying vec4 vColor;\n    \n    attribute float vertexRelDistance;\n    varying float vRelDistance;\n\n    void main() {\n      // pass through colors and distances\n      vColor = vertexColor;\n      vRelDistance = vertexRelDistance + dashTranslate;\n      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n    }\n"
 const fragmentShader: string = "\n    uniform float dashOffset; \n    uniform float dashSize;\n    uniform float gapSize; \n    \n    varying vec4 vColor;\n    varying float vRelDistance;\n    \n    void main() {\n      // ignore pixels in the gap\n      if (vRelDistance < dashOffset) discard;\n      if (mod(vRelDistance - dashOffset, dashSize + gapSize) > dashSize) discard;\n    \n      // set px color: [r, g, b, a], interpolated between vertices \n      gl_FragColor = vColor; \n    }\n"
@@ -34,9 +33,6 @@ export default function InquiryArc() {
 		line.geometry.dispose()
 		line.geometry.setFromPoints( curve.getPoints( 64 ))
 		
-		// @ts-ignore - Property 'uniforms' does not exist on type 'Material | Material[]'. Property 'uniforms' does not exist on type 'Material'.
-		// gsap.to( line.material.uniforms.dashTranslate, { value: 1, duration: 8})
-
 		return line
 	}
 
