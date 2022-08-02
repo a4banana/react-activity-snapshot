@@ -4,8 +4,6 @@ import type { Dispatch, ReactNode } from "react";
 // this is dummy data
 import { buyerInquirySellerForWorldMap as inqData } from '../assets/data.json'
 
-console.log( inqData )
-
 export enum InquiryActionType {
     GET_INQ,
 }
@@ -31,6 +29,7 @@ function inqReducer( state: InquiryState, { type }: InquiryAction ): InquiryStat
 
 export function InquiryProvider({ children }: { children: ReactNode }) {
     const [ inquiries , dispatch ] = useReducer( inqReducer, initialState )
+
     
     return (
         <InquiryContext.Provider value={ inquiries }>

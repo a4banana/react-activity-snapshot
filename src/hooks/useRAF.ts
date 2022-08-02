@@ -38,7 +38,7 @@ export default function useRAF(): IUseRAF {
         if ( !_isPlaying.current ) previous.current = timestamp - start.current - elapsed.current;
         elapsed.current = timestamp - start.current - previous.current;
         let progress = elapsed.current / CYCLE_SPEED * 100;
-
+        
         dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: progress });
         ( elapsed.current <= CYCLE_SPEED )
             ? rafId.current = window.requestAnimationFrame( frame )

@@ -34,7 +34,6 @@ export default function useFetch<T = unknown>( uri: string ): State<T> {
         data: undefined,
         error: undefined
     }
-
     const fetchReducer = ( state: State<T>, action: FetchAction<T> ): State<T> => {
         switch( action.type ) {
             case ActionTypes.LOADING:

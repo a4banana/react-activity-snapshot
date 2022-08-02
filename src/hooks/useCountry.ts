@@ -1,10 +1,12 @@
-import { useMemo, useState, useRef, MutableRefObject } from "react"
+import { useState, useRef, useCallback } from "react"
+import type { MutableRefObject } from "react";
 import type ThreeGlobe from 'three-globe';
-import type { Feature, Geometry } from "geojson"
+import type { Feature } from "geojson"
 import type { Mesh } from "three";
 
 interface IUseCountry {
     countries: CountryDataCollection
+    buyerAndSellerGeoPositions: MutableRefObject<any>
     initCountries: ( geojson: Array<Feature>, globe: ThreeGlobe ) => void
 }
 
@@ -25,14 +27,21 @@ type CountryGeoCoods = {
     name: string
 }
 
+interface BuyerAndSellerGeoPosition {
+    buyer: GeoPosition
+    seller: GeoPosition
+}
+
+type BuyerAndSellerGeoPositionCollection = Array<BuyerAndSellerGeoPosition>
+
 // useProducts Hook
 export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldMapType> ): IUseCountry {
     const [ countries, setCountries ] = useState<CountryDataCollection>([])
-
+    const buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef([])
+    
     function initCountries( geojson: Array<Feature>, globe: ThreeGlobe ) {
         const uniqCountries = countryDataByUniqCountries( inquiries )
-        
-        const _countries = uniqCountries.reduce<CountryDataCollection>(
+        const reducedCountries = uniqCountries.reduce<CountryDataCollection>(
             ( acc: CountryDataCollection, iso_a2: string ): CountryDataCollection => {
             if ( !hasCountry( acc, iso_a2 ) ) {
                 const geoInfo = getCountryGeoCoods( geojson, iso_a2, globe )
@@ -44,13 +53,34 @@ export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldM
             return acc
         }, []);
 
-        setCountries( _countries )
+        setCountries( reducedCountries )
+
+        const buyerAndSellerReduce = (
+            acc: BuyerAndSellerGeoPositionCollection,
+            country: BuyerInquirySellerForWorldMapType
+        ): BuyerAndSellerGeoPositionCollection => {
+            const seller = getPosition( reducedCountries, country.sellerCountry )
+            const buyer = getPosition( reducedCountries, country.buyerCountry )
+            if (( seller && buyer ) && ( seller !== buyer )) {
+                acc.push({ seller, buyer })
+            }
+            return acc
+        }
+
+        buyerAndSellerGeoPositions.current = inquiries.reduce( buyerAndSellerReduce, [])
     }
 
     return {
+        buyerAndSellerGeoPositions,
         countries,
         initCountries
     }
+}
+
+
+const getPosition = ( countries: CountryDataCollection, iso_a2: string ): GeoPosition | null => {
+    const res = countries.find(( country: CountryData ) => country.iso_a2 === iso_a2 )
+    return res ? res.position : null
 }
 
 const countryDataByUniqCountries = ( inquiries: Array<BuyerInquirySellerForWorldMapType> ): Array<string> => {

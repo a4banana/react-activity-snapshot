@@ -5,12 +5,11 @@ import ThreeGlobe from 'three-globe'
 import { InteractionManager } from 'three.interactive'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
-import { gsap } from 'gsap'
-import { chunk } from 'lodash-es'
 import { getPixelsPerDegree } from './PolarAndCartesian'
 import { FeatureCollection } from 'geojson'
 
 import CountryPoint from './DrawCountryPoint'
+import InquiryArc from './DrawInquiryArc'
 
 type Rendereres = Array<WebGLRenderer | CSS3DRenderer>
 
@@ -21,11 +20,14 @@ export type ThreeControllerType = {
 	globe: ThreeGlobe
 	interactionManager: InteractionManager
 	init: () => void
+	drawInquiryArcs: ( inqs: { buyer: GeoPosition, seller: GeoPosition }[] )=> void
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
 	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement ) => void
+	render: ( isPlaying: boolean ) => void
 }
 
 export default function ThreeController(): ThreeControllerType {
+	console.log( 'Three Controller Init' )
 	const LIGHT_COLOR: number = 0xFFFFFF
 	const SCREEN_WIDTH: number = 1184
     const SCREEN_HEIGHT: number = 666
@@ -44,19 +46,24 @@ export default function ThreeController(): ThreeControllerType {
 	const interactionManager: InteractionManager = new InteractionManager( webGLRenderer, cam, webGLRenderer.domElement, undefined )
 	
 	const countryPoint = CountryPoint( interactionManager, cam, obControl )
-	const { drawCountryPoint } = countryPoint;
+	const { drawCountryPoint } = countryPoint
+	const inquiryArc = InquiryArc()
+	const { drawInquiryArc } = inquiryArc
+	
 	const pointGroup: Group = new Group()
+	const lineGroup: Group = new Group()
 
-	function render( timestamp: number ): void {
+	function render( isPlaying: boolean ): void {
 		obControl.update()
 		interactionManager.update()
 		renderers.forEach( r => r.render( scene, cam ) )
 		webGLRenderer.render( scene, cam )
 		css3DRenderer.render( scene, cam )
-		// updatePath()
+		
+		if ( isPlaying ) updatePath( lineGroup )
 		// updatePoint()
 		// htmlGroup.children.forEach( c => c.lookAt( cam.position ) )
-		window.requestAnimationFrame( render )
+		// window.requestAnimationFrame( render )
 	}
 
 	function init(): void {
@@ -77,14 +84,15 @@ export default function ThreeController(): ThreeControllerType {
 		})
 
 		// scene.add( focusedLineGroup )
-		// scene.add( focusedPointGroup 
+		// scene.add( focusedPointGroup )
 		scene.add( pointGroup )
+		scene.add( lineGroup )
 
 		// init and set Renderer
 		setRenderersSize( renderers, SCREEN_WIDTH, SCREEN_HEIGHT )
 		initCSS3DRenderer( css3DRenderer )
-
-		window.requestAnimationFrame( render )
+		// window.requestAnimationFrame( render )
+		render( true )
 	}
 
 	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement ) => {
@@ -92,45 +100,18 @@ export default function ThreeController(): ThreeControllerType {
 		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom )))
 	}
 
+	const drawInquiryArcs = ( inqs: { buyer: GeoPosition, seller: GeoPosition }[]) => {
+		lineGroup.children = []
+		inqs.forEach(({ buyer, seller }) => lineGroup.add( drawInquiryArc( buyer, seller )))
+	}
+
 	const drawCountryPolygon = ( geojson: FeatureCollection ): void => drawHexPolygons( globe, geojson )
 
 	return {
 		renderers, scene, cam, globe, interactionManager,
-		init, drawCountryPolygon, drawCountryPoints
+		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render
 	}
 }
-
-function generateArcsAndPoints( globe: ThreeGlobe, countries: CountryDataCollection, pointGroup: Group ) {
-	// // remove points from interaction manager
-	// pointGroup.children.forEach( child => interactionManager.remove( child ))
-	// // reset Three Point Group
-	pointGroup.children = []
-	// // reset current point Data
-	// resetCountries()
-	// // reest Three Line Group
-	// lineGroup.children = []
-	// htmlGroup.children.forEach( cssobj => htmlGroup.remove( cssobj ) )
-	// htmlGroup.children = []
-
-	// const sellers = [ ...new Set( inquiries.value.map( inq => inq.sellerCountry ))]
-	// const buyers = [ ...new Set( inquiries.value.map( inq => inq.buyerCountry ))]
-
-	// sellers.forEach( country => createOrUpdateCountry( country ))
-	// buyers.forEach( country => createOrUpdateCountry( country ))
-
-	countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom.value ) ))
-
-	// arc
-	// const seg = 3
-	// const gap = .5
-	// const segTime = CycleProperties.Speed / seg
-	// const segDelay = segTime * gap
-	// const segDuration = ( i: number ) => segDelay * i * 2;
-	
-	// const chunkCount: number = Math.ceil( inquiries.value.length / seg )
-	// const chunks = chunk( inquiries.value, chunkCount )
-}
-
 
 const drawHexPolygons = ( globe: ThreeGlobe, { features }: FeatureCollection ): void => {
 	globe.hexPolygonsData( features )
@@ -159,4 +140,11 @@ const initCSS3DRenderer = ( css3DRenderer: CSS3DRenderer ): void => {
 	css3DRenderer.domElement.style.top = '0px'
 	css3DRenderer.domElement.style.left = '0px'
 	css3DRenderer.domElement.style.pointerEvents = 'none'
+}
+
+function updatePath( lineGroup: Group ): void {
+	lineGroup.children.forEach( child => {
+		// @ts-ignore
+		child.material.uniforms.dashTranslate.value += 0.0015
+	})
 }

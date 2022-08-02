@@ -1,11 +1,9 @@
 import './TridgeGlobe.sass'
-import { memo, MutableRefObject, useContext, useEffect, useRef } from "react"
+import { memo, MutableRefObject, useContext, useEffect, useRef, useCallback } from "react"
 // import { QueuesContext, QueuesDispatchContext, QueuesActionType } from "../../contexts/componentReadyContext"
-// import { CycleContext, CycleDispatchContext, CycleActionTypes } from "../../contexts/cycleContext"
+import { CycleContext, CycleDispatchContext, CycleActionTypes } from "../../contexts/cycleContext"
 import useRAF from '../../hooks/useRAF'
 import type { FeatureCollection } from 'geojson'
-
-import ThreeGlobe from 'three-globe'
 
 import useFetch from '../../hooks/useFetch'
 import useCountry from '../../hooks/useCountry'
@@ -17,18 +15,16 @@ import type { ThreeControllerType } from '../../utils/ThreeContorller'
 const TridgeGlobe = memo(() => {
     // const queues = useContext( QueuesContext )
     // const dispatch = useContext( QueuesDispatchContext )
-    // const { isPlaying } = useContext( CycleContext )
+    const { isPlaying } = useContext( CycleContext )
     const GEO_JSON_URI: string = './custom.geojson'
     const { data: geojson } = useFetch<FeatureCollection>( GEO_JSON_URI )
-    
+
     const canvasDom = useRef< HTMLDivElement | null >( null )
     const inquiryContext = useContext( InquiryContext )
-    const { initCountries, countries } = useCountry( inquiryContext!.inquiries as Array<BuyerInquirySellerForWorldMapType> )
+    const { initCountries, countries, buyerAndSellerGeoPositions } = useCountry( inquiryContext!.inquiries as Array<BuyerInquirySellerForWorldMapType> )
     const threeController: MutableRefObject<ThreeControllerType | null> = useRef( null )
-    
     useEffect(() => {
         threeController.current = ThreeController()
-
     }, [])
 
     // after fetch geojson
@@ -50,13 +46,14 @@ const TridgeGlobe = memo(() => {
     // after countries set
     useEffect(() => {
         if ( countries.length && threeController.current ) {
-            const { drawCountryPoints } = threeController.current
+            const { drawCountryPoints, drawInquiryArcs } = threeController.current
             drawCountryPoints( countries, canvasDom.current! )
+            drawInquiryArcs( buyerAndSellerGeoPositions.current )
         }
     }, [ countries ])
-    
-    const { run } = useRAF()
 
+    const { run } = useRAF()
+    
     return (
         <div id="tridge-globe" ref={ canvasDom }>
         </div>
