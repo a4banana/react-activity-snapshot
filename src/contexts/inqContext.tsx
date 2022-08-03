@@ -29,7 +29,6 @@ function inqReducer( state: InquiryState, { type }: InquiryAction ): InquiryStat
 
 export function InquiryProvider({ children }: { children: ReactNode }) {
     const [ inquiries , dispatch ] = useReducer( inqReducer, initialState )
-
     
     return (
         <InquiryContext.Provider value={ inquiries }>

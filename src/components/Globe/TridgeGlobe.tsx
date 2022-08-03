@@ -15,14 +15,19 @@ import type { ThreeControllerType } from '../../utils/ThreeContorller'
 const TridgeGlobe = memo(() => {
     // const queues = useContext( QueuesContext )
     // const dispatch = useContext( QueuesDispatchContext )
-    const { isPlaying } = useContext( CycleContext )
     const GEO_JSON_URI: string = './custom.geojson'
     const { data: geojson } = useFetch<FeatureCollection>( GEO_JSON_URI )
 
     const canvasDom = useRef< HTMLDivElement | null >( null )
     const inquiryContext = useContext( InquiryContext )
-    const { initCountries, countries, buyerAndSellerGeoPositions } = useCountry( inquiryContext!.inquiries as Array<BuyerInquirySellerForWorldMapType> )
+    const { countries, buyerAndSellerGeoPositions,
+        initCountries, toggleCountry } = useCountry( inquiryContext!.inquiries as Array<BuyerInquirySellerForWorldMapType> )
     const threeController: MutableRefObject<ThreeControllerType | null> = useRef( null )
+    const raf = useRAF()
+
+    const _countries = useRef( countries )
+    const _isDrawn = useRef( false )
+    
     useEffect(() => {
         threeController.current = ThreeController()
     }, [])
@@ -30,7 +35,8 @@ const TridgeGlobe = memo(() => {
     // after fetch geojson
     useEffect(() => {
         if ( geojson && threeController.current ) {
-            const { drawCountryPolygon, renderers, init, globe } = threeController.current;
+            const { renderers, globe, render,
+                drawCountryPolygon, init: initThreeController } = threeController.current;
             
             drawCountryPolygon( geojson )
 
@@ -38,25 +44,34 @@ const TridgeGlobe = memo(() => {
             renderers.forEach( renderer => ( canvasDom.current ) ? canvasDom.current.appendChild( renderer.domElement ) : '' )
 
             // init threejs
-            init()
-            setTimeout( () => { initCountries( geojson.features, globe )}, 150 )
+            initThreeController()
+            
+            raf.addCallback( 'three controller rendering', render )
+
+            /*
+                ! setTimeout should be modified
+            */
+            setTimeout( () => { initCountries( geojson.features, globe )}, 1 )
         }
     }, [ geojson ])
 
     // after countries set
+    // useEffect(() => {
+    //     _countries.current = countries
+    // }, [ countries ])
+    
     useEffect(() => {
-        if ( countries.length && threeController.current ) {
+        // console.log( _countries )
+        if ( countries.length && threeController.current && !_isDrawn.current ) {
             const { drawCountryPoints, drawInquiryArcs } = threeController.current
-            drawCountryPoints( countries, canvasDom.current! )
+            drawCountryPoints( countries, canvasDom.current!, toggleCountry )
             drawInquiryArcs( buyerAndSellerGeoPositions.current )
+            _isDrawn.current = true
         }
     }, [ countries ])
-
-    const { run } = useRAF()
     
     return (
-        <div id="tridge-globe" ref={ canvasDom }>
-        </div>
+        <div id="tridge-globe" ref={ canvasDom }></div>
     )
 })
 

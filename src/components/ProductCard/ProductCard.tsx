@@ -1,14 +1,13 @@
 import './ProductCard.sass'
 import selectedIcon from '../../assets/checked.svg'
-import { useState } from 'react'
+import { MouseEvent, useState } from 'react'
 
 interface Props {
     product: IProduct
-    clickHandler: ( event: any, id: number ) => void
+    clickHandler: ( event: MouseEvent<HTMLLIElement>, id: number ) => void
 }
 
 export default function ProductCard({ product: { id, image, name, count, selected, disabled }, clickHandler }: Props ) {
-    // unused prop: index
     const [ isPressing, setIsPressing ] = useState( false )
     const [ isBlank, setIsBlank ] = useState( false )
     const desc: string = ( count > 1 )
@@ -17,21 +16,21 @@ export default function ProductCard({ product: { id, image, name, count, selecte
     
     const classes = [
         'product-card-content',
-        selected ? 'is-selected' : '',
-        isPressing ? 'is-pressing' : '',
-        disabled ? 'is-disabled' : '',
-        isBlank ? 'blank-card' : ''
+        selected && 'is-selected',
+        isPressing && 'is-pressing',
+        disabled && 'is-disabled',
+        isBlank && 'blank-card'
     ].join( ' ' )
     
-    function cardClickHandler( event: any ) {
+    function cardClickHandler( event: MouseEvent<HTMLLIElement> ): void {
         clickHandler( event, id )
     }
 
-    function cardPressing() {
+    function cardPressing(): void {
         setIsPressing( true )
     }
 
-    function cardRelease() {
+    function cardRelease(): void {
         setIsPressing( false )
     }
 

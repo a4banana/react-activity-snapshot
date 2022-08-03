@@ -1,12 +1,11 @@
 import { Scene, WebGLRenderer, PerspectiveCamera,
-	AmbientLight, DirectionalLight, Group, Mesh, Camera
-	} from 'three'
+	AmbientLight, DirectionalLight, Group } from 'three'
 import ThreeGlobe from 'three-globe'
 import { InteractionManager } from 'three.interactive'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
-import { getPixelsPerDegree } from './PolarAndCartesian'
-import { FeatureCollection } from 'geojson'
+// import { getPixelsPerDegree } from './PolarAndCartesian'
+import type { FeatureCollection } from 'geojson'
 
 import CountryPoint from './DrawCountryPoint'
 import InquiryArc from './DrawInquiryArc'
@@ -22,8 +21,8 @@ export type ThreeControllerType = {
 	init: () => void
 	drawInquiryArcs: ( inqs: { buyer: GeoPosition, seller: GeoPosition }[] )=> void
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
-	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement ) => void
-	render: ( isPlaying: boolean ) => void
+	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, callback: ( any: any ) => void ) => void
+	render: ( isPlaying?: boolean ) => void
 }
 
 export default function ThreeController(): ThreeControllerType {
@@ -31,9 +30,10 @@ export default function ThreeController(): ThreeControllerType {
 	const LIGHT_COLOR: number = 0xFFFFFF
 	const SCREEN_WIDTH: number = 1184
     const SCREEN_HEIGHT: number = 666
-    const BLUR_ALPHA: number = 0.3
-    const BLUR_RADIUS: number = getPixelsPerDegree( 0.8 )
-    const FOCUS_RADIUS: number = getPixelsPerDegree( 1.2 )
+	const COUNTRY_POLYGON_COLOR: string = '#3D3D3D'
+    // const BLUR_ALPHA: number = 0.3
+    // const BLUR_RADIUS: number = getPixelsPerDegree( 0.8 )
+    // const FOCUS_RADIUS: number = getPixelsPerDegree( 1.2 )
 	const CAM_INITIAL_Z: number = 270
 
 	const webGLRenderer = new WebGLRenderer({ antialias: true, alpha: true })
@@ -53,17 +53,18 @@ export default function ThreeController(): ThreeControllerType {
 	const pointGroup: Group = new Group()
 	const lineGroup: Group = new Group()
 
-	function render( isPlaying: boolean ): void {
+	function render( isPlaying?: boolean ): void {
 		obControl.update()
 		interactionManager.update()
 		renderers.forEach( r => r.render( scene, cam ) )
 		webGLRenderer.render( scene, cam )
 		css3DRenderer.render( scene, cam )
 		
-		if ( isPlaying ) updatePath( lineGroup )
-		// updatePoint()
-		// htmlGroup.children.forEach( c => c.lookAt( cam.position ) )
-		// window.requestAnimationFrame( render )
+		if ( isPlaying ) {
+			updatePath( lineGroup )
+			// updatePoint()
+			// htmlGroup.children.forEach( c => c.lookAt( cam.position ) )
+		}
 	}
 
 	function init(): void {
@@ -92,20 +93,20 @@ export default function ThreeController(): ThreeControllerType {
 		setRenderersSize( renderers, SCREEN_WIDTH, SCREEN_HEIGHT )
 		initCSS3DRenderer( css3DRenderer )
 		// window.requestAnimationFrame( render )
-		render( true )
+		render()
 	}
 
-	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement ) => {
+	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement, callback: () => void ) => {
 		pointGroup.children = []
-		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom )))
+		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom, callback )))
 	}
 
 	const drawInquiryArcs = ( inqs: { buyer: GeoPosition, seller: GeoPosition }[]) => {
 		lineGroup.children = []
 		inqs.forEach(({ buyer, seller }) => lineGroup.add( drawInquiryArc( buyer, seller )))
 	}
-
-	const drawCountryPolygon = ( geojson: FeatureCollection ): void => drawHexPolygons( globe, geojson )
+	
+	const drawCountryPolygon = ( geojson: FeatureCollection ): void => drawHexPolygons( globe, geojson, COUNTRY_POLYGON_COLOR )
 
 	return {
 		renderers, scene, cam, globe, interactionManager,
@@ -113,11 +114,11 @@ export default function ThreeController(): ThreeControllerType {
 	}
 }
 
-const drawHexPolygons = ( globe: ThreeGlobe, { features }: FeatureCollection ): void => {
+const drawHexPolygons = async ( globe: ThreeGlobe, { features }: FeatureCollection, color: string ): void => {
 	globe.hexPolygonsData( features )
 		.hexPolygonResolution( 3 )
 		.hexPolygonMargin( .7 )
-		.hexPolygonColor(() => '#3d3d3d' )
+		.hexPolygonColor( () => color )
 }
 
 const setCamera = ( cam: PerspectiveCamera, width: number, height: number, CAM_INITIAL_Z: number ): void => {

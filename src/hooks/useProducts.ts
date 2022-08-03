@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect, useContext } from "react"
+import { CycleDispatchContext, CycleActionTypes } from '../contexts/cycleContext'
 
 type ProductCollection = Array<IProduct>
 
@@ -11,12 +12,19 @@ interface IUseProducts {
 export default function useProducts( inquiries: Array<BuyerInquirySellerForWorldMapType>, num: number ): IUseProducts {
     const initialState = inquiries.reduce<ProductCollection>( productsReducer, [] ).sort( sortProductByCount ).slice( 0, num )
     const [ products, setProducts ] = useState<ProductCollection>( initialState )
+    const dispatchCycle = useContext( CycleDispatchContext )
 
     const toggleProduct = ( id: number ) => {
         setProducts( prev => prev.map(( p: IProduct ) => {
             return { ...p, selected: ( p.selected && p.id === id ) ? false : ( p.id === id ) }
         }))
     }
+
+    useEffect(() => {
+        hasSelected( products )
+            ? dispatchCycle({ type: CycleActionTypes.PAUSE })
+            : dispatchCycle({ type: CycleActionTypes.PLAY })
+    }, [ products ])
 
     return {
         products,
@@ -38,6 +46,10 @@ function updateProduct( products: ProductCollection, id: number ): ProductCollec
 
 function sortProductByCount( a: IProduct, b: IProduct ): number {
     return b.count - a.count 
+}
+
+function hasSelected( products: ProductCollection ): boolean {
+    return products.some(( p: IProduct ) => p.selected )
 }
 
 // inquiries to products colleciton ( create or update )

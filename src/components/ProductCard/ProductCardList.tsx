@@ -1,19 +1,16 @@
 import './ProductCardList.sass'
+import { useContext } from 'react'
+import type { MouseEvent } from 'react'
 import ProductCard from './ProductCard'
-import { useContext, useEffect } from 'react'
 import { InquiryContext } from '../../contexts/inqContext'
 import useProducts from '../../hooks/useProducts'
 
 export default function ProductCardList() {
-    const productCount = 9
+    const PRODUCT_COUNT: number = 8
     const inquiries = useContext( InquiryContext )
-    const { products, toggleProduct } = useProducts( inquiries!.inquiries, productCount )
+    const { products, toggleProduct } = useProducts( inquiries!.inquiries, PRODUCT_COUNT )
 
-    // useEffect(() => {
-        
-    // }, [])
-
-    const clickHandler = ( event: any, id: number ) => {
+    const clickHandler = ( event: MouseEvent<HTMLLIElement>, id: number ) => {
         toggleProduct( id )
     }
 

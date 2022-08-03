@@ -1,5 +1,5 @@
 import './ProgressIndicator.sass'
-import { SyntheticEvent, useContext, useEffect, useState, useRef, CSSProperties, MutableRefObject } from 'react'
+import { SyntheticEvent, useContext, CSSProperties } from 'react'
 import { CycleContext } from '../../contexts/cycleContext'
 import { ProgressContext } from '../../contexts/progressContext'
 

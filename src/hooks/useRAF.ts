@@ -1,17 +1,20 @@
 import { ProgressDispatchContext, ProgressActionTypes } from './../contexts/progressContext';
 import { CycleActionTypes } from './../contexts/cycleContext';
-import { useContext, useState, useEffect, useRef, MutableRefObject } from "react"
+import { useContext, useState, useEffect, useRef, MutableRefObject, useCallback } from "react"
 import { CycleContext, CycleDispatchContext } from "../contexts/cycleContext"
 
 interface IUseRAF {
-    // frame: ( timestamp: number ) => void
-    run: () => void
+    addCallback: <T>( key: string, fn: () => T ) => void
 }
 
 /*
     * 'isPlaying' isn't reactivity in frame() function >> isPlaying should be reactivity in frame()
     * dispatch make rerender useRAF() >> only 'frame()' should be re run with RAF
 */
+
+type RAFCallbacks<T> = {
+    [ key: string ]: ( isPlaying?: boolean ) => T
+}
 
 export default function useRAF(): IUseRAF {
     const CYCLE_SPEED = 10000
@@ -23,6 +26,7 @@ export default function useRAF(): IUseRAF {
     const { isPlaying } = useContext( CycleContext )
     const dispatchProgress = useContext( ProgressDispatchContext )
     const _isPlaying: MutableRefObject<boolean> = useRef( isPlaying )
+    const rafCallbacks: MutableRefObject<RAFCallbacks<unknown>> = useRef({})
 
     function done() {
         start.current = 0
@@ -38,11 +42,16 @@ export default function useRAF(): IUseRAF {
         if ( !_isPlaying.current ) previous.current = timestamp - start.current - elapsed.current;
         elapsed.current = timestamp - start.current - previous.current;
         let progress = elapsed.current / CYCLE_SPEED * 100;
-        
+
+        // rendering functions
+        Object.values( rafCallbacks.current ).forEach( k => k( _isPlaying.current ) )
+
         dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: progress });
-        ( elapsed.current <= CYCLE_SPEED )
-            ? rafId.current = window.requestAnimationFrame( frame )
-            : done()
+        rafId.current = window.requestAnimationFrame( frame )
+        
+        // ( elapsed.current <= CYCLE_SPEED )
+        //     ? rafId.current = window.requestAnimationFrame( frame )
+        //     : done()
     }
 
     useEffect(() => {
@@ -53,12 +62,12 @@ export default function useRAF(): IUseRAF {
     useEffect(() => {
         _isPlaying.current = isPlaying
     }, [ isPlaying ])
-
-    function run() {
-        
+    
+    function addCallback<T>( key: string, fn: ( isPlaying?: boolean ) => T ): void {
+        rafCallbacks.current = { ...rafCallbacks.current, ...{ key: fn }}
     }
 
     return {
-        run
+        addCallback
     }
 }

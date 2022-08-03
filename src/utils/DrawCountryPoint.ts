@@ -10,8 +10,8 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 	const COUNTRY_POINT_ALT: number = .01
 	const geometry: CircleBufferGeometry = new CircleBufferGeometry( 1, 16 )
 	
-	function drawCountryPoint( country: CountryData, dom: HTMLDivElement | undefined ): Mesh {
-		const { lat, lng, alt } = country.position
+	function drawCountryPoint( country: CountryData, dom: HTMLDivElement | undefined, callback: () => void ): Mesh {
+		const { lat, lng } = country.position
 		const material: MeshBasicMaterial = new MeshBasicMaterial({ color: COUNTRY_POINT_COLOR, opacity: COUNTRY_OPACITY, transparent: true })
 		const mesh: Mesh = new Mesh( geometry, material )
 		Object.assign( mesh.position, polar2Cartesian( lat, lng, COUNTRY_POINT_ALT ))
@@ -29,7 +29,7 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 	
 		mesh.addEventListener( 'mouseover', event => onMouseEnter( event, dom ))
 		mesh.addEventListener( 'mouseleave', event => onMouseLeave( event, country, dom ))
-		mesh.addEventListener( 'click', event => onMouseClick( event, country ))
+		mesh.addEventListener( 'click', event => onMouseClick( event, country, callback ))
 		interactionManager.add( mesh )
 		
 		let r = getPixelsPerDegree( 0.8 )
@@ -52,14 +52,15 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 		event.target.userData.hover = false
 	}
 	
-	function onMouseClick( event: any, country: CountryData ) {
+	function onMouseClick( event: any, country: CountryData, callback: ( iso_a2: string ) => void ) {
 		const point = event.target.position
 		const center: Vector3 = new Vector3( 0, 0, 0 )
 		const cam_distance: number = cam.position.distanceTo( center )
 		const point_distance: number = point.distanceTo( center )
 		const { x, y, z }: Vector3 = point.clone().multiplyScalar( cam_distance / point_distance )
 		// select country
-		// if ( event.target.parent.visible ) toggleCountry( country )
+		
+		if ( event.target.parent.visible ) callback( country.iso_a2 )
 		// cam move
 		gsap.to( obControl.object.position, { x, y, z, duration: .66, ease: 'sine.out' })
 	}

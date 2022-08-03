@@ -1,13 +1,15 @@
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useEffect, useContext } from "react"
 import type { MutableRefObject } from "react";
 import type ThreeGlobe from 'three-globe';
 import type { Feature } from "geojson"
-import type { Mesh } from "three";
+import type { BufferGeometry, Mesh } from "three";
+import { CycleDispatchContext, CycleActionTypes } from '../contexts/cycleContext';
 
 interface IUseCountry {
     countries: CountryDataCollection
     buyerAndSellerGeoPositions: MutableRefObject<any>
-    initCountries: ( geojson: Array<Feature>, globe: ThreeGlobe ) => void
+    initCountries: ( geojson: Array<Feature>, globe: ThreeGlobe ) => void,
+    toggleCountry: ( iso_a2: string ) => void
 }
 
 interface State {
@@ -19,7 +21,7 @@ type GeoJsonProperties = {
 }
 
 interface FeatureWithThree extends Feature {
-    __threeObj: Mesh
+    __threeObj: Mesh & { geometry: BufferGeometry }
 }
 
 type CountryGeoCoods = {
@@ -38,6 +40,7 @@ type BuyerAndSellerGeoPositionCollection = Array<BuyerAndSellerGeoPosition>
 export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldMapType> ): IUseCountry {
     const [ countries, setCountries ] = useState<CountryDataCollection>([])
     const buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef([])
+    const dispatchCycle = useContext( CycleDispatchContext )
     
     function initCountries( geojson: Array<Feature>, globe: ThreeGlobe ) {
         const uniqCountries = countryDataByUniqCountries( inquiries )
@@ -70,13 +73,33 @@ export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldM
         buyerAndSellerGeoPositions.current = inquiries.reduce( buyerAndSellerReduce, [])
     }
 
+    useEffect(() => {
+        ( hasSelected( countries ) )
+            ? dispatchCycle({ type: CycleActionTypes.PAUSE })
+            : dispatchCycle({ type: CycleActionTypes.PLAY })
+    }, [ countries ])
+
+    function toggleCountry( iso_a2: string ): void {
+        setCountries( prev => toggleCountrySelect( prev, iso_a2 ) )
+    }
+
     return {
         buyerAndSellerGeoPositions,
         countries,
-        initCountries
+        initCountries,
+        toggleCountry
     }
 }
 
+const toggleCountrySelect = ( countries: CountryDataCollection, iso_a2: string ): CountryDataCollection =>
+    countries.map(( country: CountryData ) => {
+        return { ...country, selected: ( country.selected && country.iso_a2 === iso_a2 ) ? false : ( country.iso_a2 === iso_a2 ) }
+    }
+)
+
+const hasSelected = ( countries: CountryDataCollection ): boolean => {
+    return countries.some(( country: CountryData ) => country.selected )
+}
 
 const getPosition = ( countries: CountryDataCollection, iso_a2: string ): GeoPosition | null => {
     const res = countries.find(( country: CountryData ) => country.iso_a2 === iso_a2 )
@@ -102,8 +125,8 @@ const createCountry = ( iso_a2: string, name: string, position: GeoPosition ): C
 
 const getCountryGeoCoods = ( features: Array<Feature>, iso_a2: string, globe: ThreeGlobe): CountryGeoCoods | void => {
 	const feature: Feature | null = _getCountryByCode( features, iso_a2 )
-
-	if ( feature && _hasFeatureAndThreeObj( feature, iso_a2 ) ) {
+	
+    if ( feature && _hasFeatureAndThreeObj( feature, iso_a2 ) ) {
 		const { name } = feature.properties as GeoJsonProperties
 		const { x, y, z } = ( feature as FeatureWithThree ).__threeObj.geometry.boundingSphere!.center
 
