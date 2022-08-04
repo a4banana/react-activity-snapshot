@@ -19,9 +19,6 @@ type CycleState = {
 
 export interface CycleAction {
     type: CycleActionTypes
-    payload?: {
-        progress: number
-    }
 }
 
 const initialState: CycleState = {
@@ -30,18 +27,15 @@ const initialState: CycleState = {
     isLoading: false
 }
 
-function cycleReducer( state: CycleState, { type, payload }: CycleAction ): CycleState {
+function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
     switch ( type ) {
-        case CycleActionTypes.PLAY: {
+        case CycleActionTypes.PLAY:
             return { ...state, isPlaying: true }
-        }
-        case CycleActionTypes.PAUSE: {
+        case CycleActionTypes.PAUSE:
             return { ...state, isPlaying: false }
-        }
-        case CycleActionTypes.TOGGLE_PLAY: {
+        case CycleActionTypes.TOGGLE_PLAY:
             let isPlaying: boolean = !state.isPlaying
             return { ...state, isPlaying }
-        }
         default: {
             throw new Error( 'no action type' )
         }

@@ -1,5 +1,5 @@
+import { SelectedDispatchContext, SelectedActionTypes } from '../contexts/selectedContext';
 import { useState, useEffect, useContext } from "react"
-import { CycleDispatchContext, CycleActionTypes } from '../contexts/cycleContext'
 
 type ProductCollection = Array<IProduct>
 
@@ -12,7 +12,7 @@ interface IUseProducts {
 export default function useProducts( inquiries: Array<BuyerInquirySellerForWorldMapType>, num: number ): IUseProducts {
     const initialState = inquiries.reduce<ProductCollection>( productsReducer, [] ).sort( sortProductByCount ).slice( 0, num )
     const [ products, setProducts ] = useState<ProductCollection>( initialState )
-    const dispatchCycle = useContext( CycleDispatchContext )
+    const dispatchSelected = useContext( SelectedDispatchContext )
 
     const toggleProduct = ( id: number ) => {
         setProducts( prev => prev.map(( p: IProduct ) => {
@@ -21,9 +21,11 @@ export default function useProducts( inquiries: Array<BuyerInquirySellerForWorld
     }
 
     useEffect(() => {
-        hasSelected( products )
-            ? dispatchCycle({ type: CycleActionTypes.PAUSE })
-            : dispatchCycle({ type: CycleActionTypes.PLAY })
+        const selected: IProduct | undefined = getSelected( products );
+        
+        ( selected )
+            ? dispatchSelected({ type: SelectedActionTypes.SELECT_PRODUCT, product: selected })
+            : dispatchSelected({ type: SelectedActionTypes.DESELECT_PRODUCT })
     }, [ products ])
 
     return {
@@ -48,8 +50,8 @@ function sortProductByCount( a: IProduct, b: IProduct ): number {
     return b.count - a.count 
 }
 
-function hasSelected( products: ProductCollection ): boolean {
-    return products.some(( p: IProduct ) => p.selected )
+function getSelected( products: ProductCollection ): IProduct | undefined {
+    return products.find(( product: IProduct ) => product.selected )
 }
 
 // inquiries to products colleciton ( create or update )

@@ -1,13 +1,13 @@
+import { SelectedDispatchContext, SelectedActionTypes } from '../contexts/selectedContext';
 import { useState, useRef, useEffect, useContext } from "react"
 import type { MutableRefObject } from "react";
 import type ThreeGlobe from 'three-globe';
 import type { Feature } from "geojson"
 import type { BufferGeometry, Mesh } from "three";
-import { CycleDispatchContext, CycleActionTypes } from '../contexts/cycleContext';
 
-interface IUseCountry {
+interface UseCountry {
     countries: CountryDataCollection
-    buyerAndSellerGeoPositions: MutableRefObject<any>
+    buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection>
     initCountries: ( geojson: Array<Feature>, globe: ThreeGlobe ) => void,
     toggleCountry: ( iso_a2: string ) => void
 }
@@ -37,10 +37,10 @@ interface BuyerAndSellerGeoPosition {
 type BuyerAndSellerGeoPositionCollection = Array<BuyerAndSellerGeoPosition>
 
 // useProducts Hook
-export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldMapType> ): IUseCountry {
+export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldMapType> ): UseCountry {
     const [ countries, setCountries ] = useState<CountryDataCollection>([])
     const buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef([])
-    const dispatchCycle = useContext( CycleDispatchContext )
+    const dispatchSelected = useContext( SelectedDispatchContext )
     
     function initCountries( geojson: Array<Feature>, globe: ThreeGlobe ) {
         const uniqCountries = countryDataByUniqCountries( inquiries )
@@ -74,9 +74,11 @@ export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldM
     }
 
     useEffect(() => {
-        ( hasSelected( countries ) )
-            ? dispatchCycle({ type: CycleActionTypes.PAUSE })
-            : dispatchCycle({ type: CycleActionTypes.PLAY })
+        const selected: CountryData | undefined = getSelected( countries );
+
+        ( selected )
+            ? dispatchSelected({ type: SelectedActionTypes.SELECT_COUNTRY, country: selected })
+            : dispatchSelected({ type: SelectedActionTypes.DESELECT_COUNTRY })
     }, [ countries ])
 
     function toggleCountry( iso_a2: string ): void {
@@ -97,13 +99,13 @@ const toggleCountrySelect = ( countries: CountryDataCollection, iso_a2: string )
     }
 )
 
-const hasSelected = ( countries: CountryDataCollection ): boolean => {
-    return countries.some(( country: CountryData ) => country.selected )
+const getSelected = ( countries: CountryDataCollection ): CountryData | undefined => {
+    return countries.find(( country: CountryData ) => country.selected )
 }
 
-const getPosition = ( countries: CountryDataCollection, iso_a2: string ): GeoPosition | null => {
+const getPosition = ( countries: CountryDataCollection, iso_a2: string ): GeoPosition | undefined => {
     const res = countries.find(( country: CountryData ) => country.iso_a2 === iso_a2 )
-    return res ? res.position : null
+    return res ? res.position : undefined
 }
 
 const countryDataByUniqCountries = ( inquiries: Array<BuyerInquirySellerForWorldMapType> ): Array<string> => {
@@ -124,7 +126,7 @@ const createCountry = ( iso_a2: string, name: string, position: GeoPosition ): C
 }
 
 const getCountryGeoCoods = ( features: Array<Feature>, iso_a2: string, globe: ThreeGlobe): CountryGeoCoods | void => {
-	const feature: Feature | null = _getCountryByCode( features, iso_a2 )
+	const feature: Feature | undefined = _getCountryByCode( features, iso_a2 )
 	
     if ( feature && _hasFeatureAndThreeObj( feature, iso_a2 ) ) {
 		const { name } = feature.properties as GeoJsonProperties
@@ -141,7 +143,7 @@ const getCountryGeoCoods = ( features: Array<Feature>, iso_a2: string, globe: Th
 }
 
 const _getCountryByCode = ( features: Array<Feature>, iso_a2: string ) => {
-	return features.find(( g: Feature ) => g.properties!.iso_a2 === iso_a2 ) || null
+	return features.find(( g: Feature ) => g.properties!.iso_a2 === iso_a2 ) || undefined
 }
 
 const _hasFeatureAndThreeObj = ( feature: Feature, iso_a2: string ): boolean => {
