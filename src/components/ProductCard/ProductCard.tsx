@@ -23,11 +23,11 @@ export default function ProductCard({ product: { id, image, name, count, selecte
     ].join( ' ' )
     
     function cardClickHandler( event: MouseEvent<HTMLLIElement> ): void {
-        clickHandler( event, id )
+        if ( !disabled ) clickHandler( event, id )
     }
 
     function cardPressing(): void {
-        setIsPressing( true )
+        if ( !disabled ) setIsPressing( true )
     }
 
     function cardRelease(): void {

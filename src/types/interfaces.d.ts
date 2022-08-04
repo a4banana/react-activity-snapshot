@@ -14,6 +14,8 @@ interface IProduct extends Product {
     count: number // count of inquiry
     selected: boolean // select bool for interaction
     disabled: boolean
+    seller: string
+    buyer: string
 }
 
 // inquiry by count / or specific date

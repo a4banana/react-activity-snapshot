@@ -12,14 +12,13 @@ export interface InquiryAction {
     type: InquiryActionType
 }
 
-type InquiryState = BuyerInquirySellerForWorldMapList
+type State = BuyerInquirySellerForWorldMapList
+const initialState: State = inqData
 
-const initialState: InquiryState = inqData as BuyerInquirySellerForWorldMapList
-
-export const InquiryContext = createContext<InquiryState | null>( null )
+export const InquiryContext = createContext<State | null>( null )
 export const InquiryDispatchContext = createContext<Dispatch<InquiryAction> | null>( null )
 
-function inqReducer( state: InquiryState, { type }: InquiryAction ): InquiryState {
+function inqReducer( state: State, { type }: InquiryAction ): State {
     switch( type ) {
         case InquiryActionType.GET_INQ: {
             return state

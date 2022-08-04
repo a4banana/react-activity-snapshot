@@ -1,7 +1,6 @@
 import { ProgressDispatchContext, ProgressActionTypes } from './../contexts/progressContext';
-import { CycleActionTypes } from './../contexts/cycleContext';
 import { useContext, useState, useEffect, useRef, MutableRefObject, useCallback } from "react"
-import { CycleContext, CycleDispatchContext } from "../contexts/cycleContext"
+import { CycleContext } from "../contexts/cycleContext"
 
 interface RenderingFunction<T = void> {
     ( isPlaying?: boolean ): T
@@ -18,11 +17,6 @@ interface AddCallback<T = void> {
 interface IUseRAF {
     addCallback: AddCallback
 }
-
-/*
-    * 'isPlaying' isn't reactivity in frame() function >> isPlaying should be reactivity in frame()
-    * dispatch make rerender useRAF() >> only 'frame()' should be re run with RAF
-*/
 
 export default function useRAF(): IUseRAF {
     const CYCLE_SPEED = 10000

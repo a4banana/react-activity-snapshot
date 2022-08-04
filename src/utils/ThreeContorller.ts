@@ -1,5 +1,5 @@
 import { Scene, WebGLRenderer, PerspectiveCamera,
-	AmbientLight, DirectionalLight, Group } from 'three'
+	AmbientLight, DirectionalLight, Group, Mesh } from 'three'
 import ThreeGlobe from 'three-globe'
 import { InteractionManager } from 'three.interactive'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -8,11 +8,19 @@ import type { FeatureCollection } from 'geojson'
 
 import CountryPoint from './DrawCountryPoint'
 import InquiryArc from './DrawInquiryArc'
+import DrawText from './DrawText'
+import { getPixelsPerDegree } from './PolarAndCartesian'
+import gsap from 'gsap'
 
 type Rendereres = Array<WebGLRenderer | CSS3DRenderer>
 
 interface Callback<T = any, U = void> {
 	( arg?: T ): U
+}
+
+interface BuyerAndSellerGeoPosition {
+    buyer: GeoPosition
+    seller: GeoPosition
 }
 
 export type ThreeControllerType = {
@@ -25,37 +33,43 @@ export type ThreeControllerType = {
 	drawInquiryArcs: ( inqs: { buyer: GeoPosition, seller: GeoPosition }[] )=> void
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
 	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => void
+	drawSelectedInquiries: ( countries: CountryDataCollection, inqs: any, dom: HTMLDivElement, fn: Callback ) => void
 	render: ( isPlaying?: boolean ) => void
 }
 
-export default function ThreeController(): ThreeControllerType {
-	console.log( 'Three Controller Init' )
-	const LIGHT_COLOR: number = 0xFFFFFF
-	const SCREEN_WIDTH: number = 1184
-    const SCREEN_HEIGHT: number = 666
-	const COUNTRY_POLYGON_COLOR: string = '#3D3D3D'
-    // const BLUR_ALPHA: number = 0.3
-    // const BLUR_RADIUS: number = getPixelsPerDegree( 0.8 )
-    // const FOCUS_RADIUS: number = getPixelsPerDegree( 1.2 )
-	const CAM_INITIAL_Z: number = 270
+const LIGHT_COLOR: number = 0xFFFFFF
+const SCREEN_WIDTH: number = 1184
+const SCREEN_HEIGHT: number = 666
+const COUNTRY_POLYGON_COLOR: string = '#3D3D3D'
+const BLUR_ALPHA: number = 0.3
+const BLUR_RADIUS: number = getPixelsPerDegree( 0.8 )
+const FOCUS_RADIUS: number = getPixelsPerDegree( 1.2 )
+const CAM_INITIAL_Z: number = 270
 
-	const webGLRenderer = new WebGLRenderer({ antialias: true, alpha: true })
-	const css3DRenderer = new CSS3DRenderer()
-	const renderers: Rendereres = [ webGLRenderer, css3DRenderer ]
-	const scene: Scene = new Scene()
-	const cam: PerspectiveCamera = new PerspectiveCamera()
-	const globe: ThreeGlobe = new ThreeGlobe()
-	const obControl: OrbitControls = new OrbitControls( cam, webGLRenderer.domElement )
-	const interactionManager: InteractionManager = new InteractionManager( webGLRenderer, cam, webGLRenderer.domElement, undefined )
-	
-	const countryPoint = CountryPoint( interactionManager, cam, obControl )
-	const { drawCountryPoint } = countryPoint
-	const inquiryArc = InquiryArc()
-	const { drawInquiryArc } = inquiryArc
-	
-	const pointGroup: Group = new Group()
-	const lineGroup: Group = new Group()
+const webGLRenderer = new WebGLRenderer({ antialias: true, alpha: true })
+const css3DRenderer = new CSS3DRenderer()
+const renderers: Rendereres = [ webGLRenderer, css3DRenderer ]
+const scene: Scene = new Scene()
+const cam: PerspectiveCamera = new PerspectiveCamera()
+const globe: ThreeGlobe = new ThreeGlobe()
+const obControl: OrbitControls = new OrbitControls( cam, webGLRenderer.domElement )
+const interactionManager: InteractionManager = new InteractionManager( webGLRenderer, cam, webGLRenderer.domElement, undefined )
 
+const countryPoint = CountryPoint( interactionManager, cam, obControl )
+const { drawCountryPoint, moveToCamera } = countryPoint
+const inquiryArc = InquiryArc()
+const { drawInquiryArc } = inquiryArc
+const { drawTextByCountryName } = DrawText( scene )
+
+const pointGroup: Group = new Group()
+const lineGroup: Group = new Group()
+
+const textGroup: Group = new Group()
+const focusedLineGroup: Group = new Group()
+const focusedPointGroup: Group = new Group()
+const htmlGroup: Group = new Group()
+
+export default function ThreeController( geojson: FeatureCollection ): ThreeControllerType {
 	function render( isPlaying?: boolean ): void {
 		obControl.update()
 		interactionManager.update()
@@ -65,12 +79,14 @@ export default function ThreeController(): ThreeControllerType {
 		
 		if ( isPlaying ) {
 			updatePath( lineGroup )
-			// updatePoint()
-			// htmlGroup.children.forEach( c => c.lookAt( cam.position ) )
+			updatePoint( pointGroup )
+			htmlGroup.children.forEach( c => c.lookAt( cam.position ) )
 		}
 	}
 
 	function init(): void {
+		drawHexPolygons( globe, geojson, COUNTRY_POLYGON_COLOR )
+
 		scene.add( globe )
 		scene.add( new AmbientLight( LIGHT_COLOR, 1 ))
 		scene.add( new DirectionalLight( LIGHT_COLOR, .5 ))
@@ -87,15 +103,15 @@ export default function ThreeController(): ThreeControllerType {
 			zoomSpeed: 0.33
 		})
 
-		// scene.add( focusedLineGroup )
-		// scene.add( focusedPointGroup )
+		scene.add( focusedLineGroup )
+		scene.add( focusedPointGroup )
+		scene.add( textGroup )
 		scene.add( pointGroup )
 		scene.add( lineGroup )
 
-		// init and set Renderer
 		setRenderersSize( renderers, SCREEN_WIDTH, SCREEN_HEIGHT )
 		initCSS3DRenderer( css3DRenderer )
-		// window.requestAnimationFrame( render )
+		// render first frame
 		render()
 	}
 
@@ -110,11 +126,46 @@ export default function ThreeController(): ThreeControllerType {
 	}
 	
 	const drawCountryPolygon = ( geojson: FeatureCollection ): void => drawHexPolygons( globe, geojson, COUNTRY_POLYGON_COLOR )
+	
+	const drawSelectedInquiries = ( countries: CountryDataCollection, inqs: BuyerAndSellerGeoPosition[], dom: HTMLDivElement, fn: Callback ): void => {
+		initBeforeDrawSelected()
 
+		if ( countries.length ) {
+			// draw Country focused
+			countries.forEach(( country: CountryData ) => {
+				focusedPointGroup.add( drawCountryPoint( country, dom, fn ))
+				const textMesh: Mesh | undefined = drawTextByCountryName( country )
+				if ( textMesh ) textGroup.add( textMesh )
+			})
+
+			// move To Random country point
+			moveToCamera( countries[Math.floor( Math.random() * countries.length )] )
+		}
+
+		if ( inqs.length ) {
+			// draw Path
+			inqs.forEach(({ buyer, seller }) => {
+				const line = drawInquiryArc( buyer, seller )
+				// @ts-ignore
+				gsap.to( line.material.uniforms.dashTranslate, { value: 1, duration: 2, ease: "Power3.out"})
+				focusedLineGroup.add( line )
+			})
+		}
+	}
+	
 	return {
 		renderers, scene, cam, globe, interactionManager,
-		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render
+		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render, drawSelectedInquiries
 	}
+}
+
+const initBeforeDrawSelected = (): void => {
+	textGroup.children = []
+	focusedLineGroup.children = []
+	focusedPointGroup.children = []
+	pointGroup.children.forEach( point => point.userData.selected = false )
+	pointGroup.visible = false
+	lineGroup.visible = false
 }
 
 const drawHexPolygons = ( globe: ThreeGlobe, { features }: FeatureCollection, color: string ): void => {
@@ -130,7 +181,7 @@ const setCamera = ( cam: PerspectiveCamera, width: number, height: number, CAM_I
 	cam.position.z = CAM_INITIAL_Z
 }
 
-const setOrbitControl = ( ob: OrbitControls, opts: { [ key: string ]: unknown } ): void => {
+const setOrbitControl = ( ob: OrbitControls, opts: {[ key: string ]: unknown } ): void => {
 	// @ts-ignore // OrbitControls has no Type
 	Object.entries( opts ).map(([ key, value ]) => ob[ key ] = value )
 }
@@ -151,4 +202,26 @@ function updatePath( lineGroup: Group ): void {
 		// @ts-ignore
 		child.material.uniforms.dashTranslate.value += 0.0015
 	})
+}
+
+function updatePoint( pointGroup: Group ): void {
+	if ( pointGroup.children.some( point => point.userData.selected === true ) ) {
+		pointGroup.children.forEach( point => {
+			if ( !point.userData.selected ) {
+				if ( point.userData.hover ) {
+					// @ts-ignore - material doesn't captured via Group
+					point.material!.opacity = .8
+					point.scale.x = point.scale.y = FOCUS_RADIUS
+				} else {
+					// @ts-ignore - material doesn't captured via Group
+					if ( point.material.opacity > BLUR_ALPHA ) point.material!.opacity -= 0.03
+					if ( point.scale.x > BLUR_RADIUS ) point.scale.x = point.scale.y -= 0.03
+				}
+			} else {
+				// @ts-ignore - material doesn't captured via Group
+				if ( point.material!.opacity < 1 ) point.material!.opacity += 0.03
+				if ( point.scale.x < FOCUS_RADIUS ) point.scale.x = point.scale.y += 0.03
+			}
+		})
+	}
 }

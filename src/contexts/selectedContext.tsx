@@ -15,6 +15,7 @@ export enum SelectedActionTypes {
 interface State {
     selectedCountry: CountryData | null
     selectedProduct: IProduct | null
+    selectBase: 'product' | 'country' | null
 }
 
 interface SelectCountryAction {
@@ -35,19 +36,20 @@ type Action = SelectCountryAction | SelectProductAction | DefaultAction
 
 const initialState: State = {
     selectedCountry: null,
-    selectedProduct: null
+    selectedProduct: null,
+    selectBase: null
 }
 
 function selectedReducer( state: State, action: Action ): State {
     switch ( action.type ) {
         case SelectedActionTypes.DESELECT_COUNTRY:
-            return { ...state, selectedCountry: null }
+            return { ...state, selectedCountry: null, selectBase: ( state.selectedProduct ) ? 'product' : null }
         case SelectedActionTypes.DESELECT_PRODUCT:
-            return { ...state, selectedProduct: null }
+            return { ...state, selectedProduct: null, selectBase: ( state.selectedCountry ) ? 'country' : null  }
         case SelectedActionTypes.SELECT_COUNTRY:
-            return { ...state, selectedCountry: action.country }
+            return { ...state, selectedCountry: action.country, selectBase: ( state.selectedProduct ) ? 'product' : 'country' }
         case SelectedActionTypes.SELECT_PRODUCT:
-            return { ...state, selectedProduct: action.product }
+            return { ...state, selectedProduct: action.product, selectBase: ( state.selectedCountry ) ? 'country' : 'product' }
         default:
             throw new Error( 'no action type' )
     }

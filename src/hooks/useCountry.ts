@@ -1,19 +1,23 @@
-import { SelectedDispatchContext, SelectedActionTypes } from '../contexts/selectedContext';
-import { useState, useRef, useEffect, useContext } from "react"
+import { useState, useRef, useEffect, useContext, useMemo } from "react"
 import type { MutableRefObject } from "react";
+import { SelectedDispatchContext, SelectedActionTypes, SelectedContext } from '../contexts/selectedContext';
+import { CycleContext } from '../contexts/cycleContext';
 import type ThreeGlobe from 'three-globe';
 import type { Feature } from "geojson"
 import type { BufferGeometry, Mesh } from "three";
+import useInquiry from './useInquiry'
+
+interface Props {
+    globe: ThreeGlobe
+    geojson: Array<Feature> 
+}
 
 interface UseCountry {
     countries: CountryDataCollection
+    countriesByProduct: CountryDataCollection
     buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection>
-    initCountries: ( geojson: Array<Feature>, globe: ThreeGlobe ) => void,
+    buyerAndSellerGeoPositionsByProduct: MutableRefObject<BuyerAndSellerGeoPositionCollection>
     toggleCountry: ( iso_a2: string ) => void
-}
-
-interface State {
-    countries: CountryDataCollection
 }
 
 type GeoJsonProperties = {
@@ -36,50 +40,53 @@ interface BuyerAndSellerGeoPosition {
 
 type BuyerAndSellerGeoPositionCollection = Array<BuyerAndSellerGeoPosition>
 
-// useProducts Hook
-export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldMapType> ): UseCountry {
-    const [ countries, setCountries ] = useState<CountryDataCollection>([])
-    const buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef([])
-    const dispatchSelected = useContext( SelectedDispatchContext )
-    
-    function initCountries( geojson: Array<Feature>, globe: ThreeGlobe ) {
-        const uniqCountries = countryDataByUniqCountries( inquiries )
-        const reducedCountries = uniqCountries.reduce<CountryDataCollection>(
-            ( acc: CountryDataCollection, iso_a2: string ): CountryDataCollection => {
-            if ( !hasCountry( acc, iso_a2 ) ) {
-                const geoInfo = getCountryGeoCoods( geojson, iso_a2, globe )
-                if ( geoInfo ) {
-                    const { name, position } = geoInfo
-                    acc.push( createCountry( iso_a2, name, position ))
-                }
-            }
-            return acc
-        }, []);
+export default function useCountry({ globe, geojson }: Props ): UseCountry {
+    const { inquiries, selectedInquiries } = useInquiry()
+    const initialState = getCountryDataCollection( countryDataByUniqCountries( inquiries ), geojson, globe )
 
-        setCountries( reducedCountries )
+    const [ countries, setCountries ] = useState<CountryDataCollection>( initialState )
+    const [ countriesByProduct, setCountriesByProduct ] = useState<CountryDataCollection>([])
 
-        const buyerAndSellerReduce = (
-            acc: BuyerAndSellerGeoPositionCollection,
-            country: BuyerInquirySellerForWorldMapType
-        ): BuyerAndSellerGeoPositionCollection => {
-            const seller = getPosition( reducedCountries, country.sellerCountry )
-            const buyer = getPosition( reducedCountries, country.buyerCountry )
-            if (( seller && buyer ) && ( seller !== buyer )) {
-                acc.push({ seller, buyer })
-            }
-            return acc
+    const buyerAndSellerReduce = (
+        acc: BuyerAndSellerGeoPositionCollection,
+        country: BuyerInquirySellerForWorldMapType
+    ): BuyerAndSellerGeoPositionCollection => {
+        const seller = getPosition( initialState, country.sellerCountry )
+        const buyer = getPosition( initialState, country.buyerCountry )
+        if (( seller && buyer ) && ( seller !== buyer )) {
+            acc.push({ seller, buyer })
         }
-
-        buyerAndSellerGeoPositions.current = inquiries.reduce( buyerAndSellerReduce, [])
+        return acc
     }
+    const buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef(getGeoPositionsByBuyerAndSeller( inquiries, countries ))
+    const buyerAndSellerGeoPositionsByProduct: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef([])
+    const dispatchSelected = useContext( SelectedDispatchContext )
+    const { isPlaying } = useContext( CycleContext )
 
+    const hasSelectedCountry = useMemo(() => hasSelected( countries ), [ countries ])
+    const selectedCountry = useMemo(() => getSelected( countries ), [ countries ])
+    
     useEffect(() => {
-        const selected: CountryData | undefined = getSelected( countries );
-
-        ( selected )
-            ? dispatchSelected({ type: SelectedActionTypes.SELECT_COUNTRY, country: selected })
+        ( selectedCountry )
+            ? dispatchSelected({ type: SelectedActionTypes.SELECT_COUNTRY, country: selectedCountry })
             : dispatchSelected({ type: SelectedActionTypes.DESELECT_COUNTRY })
     }, [ countries ])
+
+    useEffect(() => {
+        if ( isPlaying && hasSelectedCountry ) setCountries( prev => deselect( prev ))
+    }, [ isPlaying ])
+
+    useEffect(() => {
+        console.log( selectedInquiries )
+        if ( selectedInquiries.length ) {
+            const uniq = countryDataByUniqCountries( selectedInquiries );
+            console.log( uniq )
+            setCountriesByProduct(() => getCountryDataCollection( countryDataByUniqCountries( selectedInquiries ), geojson, globe) )
+            buyerAndSellerGeoPositionsByProduct.current = selectedInquiries.reduce( buyerAndSellerReduce, []) 
+        } else {
+            setCountriesByProduct(() => [])
+        }
+    }, [ selectedInquiries ])
 
     function toggleCountry( iso_a2: string ): void {
         setCountries( prev => toggleCountrySelect( prev, iso_a2 ) )
@@ -88,9 +95,14 @@ export default function useCountry( inquiries: Array<BuyerInquirySellerForWorldM
     return {
         buyerAndSellerGeoPositions,
         countries,
-        initCountries,
+        countriesByProduct,
+        buyerAndSellerGeoPositionsByProduct,
         toggleCountry
     }
+}
+
+const deselect = ( countries: CountryDataCollection ): CountryDataCollection => {
+    return countries.map(( country: CountryData ) => ({ ...country, selected: false }))
 }
 
 const toggleCountrySelect = ( countries: CountryDataCollection, iso_a2: string ): CountryDataCollection =>
@@ -113,6 +125,37 @@ const countryDataByUniqCountries = ( inquiries: Array<BuyerInquirySellerForWorld
         [ ...new Set( inquiries.map( inq => inq.sellerCountry )),
             ...new Set( inquiries.map( inq => inq.buyerCountry ))]
     )]
+}
+
+const getGeoPositionsByBuyerAndSeller = ( inquiries: BuyerInquirySellerForWorldMapType[], arr: CountryDataCollection ): BuyerAndSellerGeoPositionCollection =>
+    inquiries.reduce((
+            acc: BuyerAndSellerGeoPositionCollection,
+            country: BuyerInquirySellerForWorldMapType
+    ): BuyerAndSellerGeoPositionCollection => {
+        const seller = getPosition( arr, country.sellerCountry )
+        const buyer = getPosition( arr, country.buyerCountry )
+        if (( seller && buyer ) && ( seller !== buyer )) {
+            acc.push({ seller, buyer })
+        }
+        return acc
+    }, [])
+
+
+const getCountryDataCollection = ( arr: string[], geojson: Array<Feature>, globe: ThreeGlobe ): CountryDataCollection => {
+    return arr.reduce(( acc: CountryDataCollection, iso_a2: string ) => {
+        if ( !hasCountry( acc, iso_a2 ) ) {
+            const geoInfo = getCountryGeoCoods( geojson, iso_a2, globe )
+            if ( geoInfo ) {
+                const { name, position } = geoInfo
+                acc.push( createCountry( iso_a2, name, position ))
+            }
+        }
+        return acc
+    }, [])
+}
+
+const hasSelected = ( countries: CountryDataCollection ): boolean => {
+    return countries.some(( country: CountryData ) => country.selected )
 }
 
 const hasCountry = ( countries: CountryDataCollection, iso_a2: string ): boolean => {
