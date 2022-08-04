@@ -4,13 +4,16 @@ import ThreeGlobe from 'three-globe'
 import { InteractionManager } from 'three.interactive'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
-// import { getPixelsPerDegree } from './PolarAndCartesian'
 import type { FeatureCollection } from 'geojson'
 
 import CountryPoint from './DrawCountryPoint'
 import InquiryArc from './DrawInquiryArc'
 
 type Rendereres = Array<WebGLRenderer | CSS3DRenderer>
+
+interface Callback<T = any, U = void> {
+	( arg?: T ): U
+}
 
 export type ThreeControllerType = {
 	renderers: Rendereres
@@ -21,7 +24,7 @@ export type ThreeControllerType = {
 	init: () => void
 	drawInquiryArcs: ( inqs: { buyer: GeoPosition, seller: GeoPosition }[] )=> void
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
-	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, callback: ( any: any ) => void ) => void
+	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => void
 	render: ( isPlaying?: boolean ) => void
 }
 
@@ -96,9 +99,9 @@ export default function ThreeController(): ThreeControllerType {
 		render()
 	}
 
-	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement, callback: () => void ) => {
+	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => {
 		pointGroup.children = []
-		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom, callback )))
+		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom, fn )))
 	}
 
 	const drawInquiryArcs = ( inqs: { buyer: GeoPosition, seller: GeoPosition }[]) => {
@@ -114,7 +117,7 @@ export default function ThreeController(): ThreeControllerType {
 	}
 }
 
-const drawHexPolygons = async ( globe: ThreeGlobe, { features }: FeatureCollection, color: string ): void => {
+const drawHexPolygons = ( globe: ThreeGlobe, { features }: FeatureCollection, color: string ): void => {
 	globe.hexPolygonsData( features )
 		.hexPolygonResolution( 3 )
 		.hexPolygonMargin( .7 )

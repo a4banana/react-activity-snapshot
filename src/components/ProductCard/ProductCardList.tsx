@@ -2,7 +2,7 @@ import './ProductCardList.sass'
 import { useContext } from 'react'
 import type { MouseEvent } from 'react'
 import ProductCard from './ProductCard'
-import { InquiryContext } from '../../contexts/inqContext'
+import { InquiryContext } from '../../contexts/inquiryContext'
 import useProducts from '../../hooks/useProducts'
 
 export default function ProductCardList() {

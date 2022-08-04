@@ -1,7 +1,7 @@
 import './ActivitySnapshot.sass'
 import { CycleProvider } from './contexts/cycleContext'
 import { QueuesProvider } from './contexts/componentReadyContext'
-import { InquiryProvider } from './contexts/inqContext'
+import { InquiryProvider } from './contexts/inquiryContext'
 
 import TridgeGlobe from './components/Globe/TridgeGlobe'
 import PlaybackControl from './components/PlaybackControl/PlaybackControl'

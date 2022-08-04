@@ -7,7 +7,7 @@ import type { FeatureCollection } from 'geojson'
 
 import useFetch from '../../hooks/useFetch'
 import useCountry from '../../hooks/useCountry'
-import { InquiryContext } from '../../contexts/inqContext'
+import { InquiryContext } from '../../contexts/inquiryContext'
 import ThreeController from '../../utils/ThreeContorller'
 import type { ThreeControllerType } from '../../utils/ThreeContorller'
 

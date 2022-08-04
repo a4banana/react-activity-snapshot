@@ -3,18 +3,26 @@ import { CycleActionTypes } from './../contexts/cycleContext';
 import { useContext, useState, useEffect, useRef, MutableRefObject, useCallback } from "react"
 import { CycleContext, CycleDispatchContext } from "../contexts/cycleContext"
 
+interface RenderingFunction<T = void> {
+    ( isPlaying?: boolean ): T
+}
+
+type RenderingFunctions<T = void> = {
+    [ key: string ]: RenderingFunction<T>
+}
+
+interface AddCallback<T = void> {
+    ( key: string, fn: RenderingFunction<T> ): void
+}
+
 interface IUseRAF {
-    addCallback: <T>( key: string, fn: () => T ) => void
+    addCallback: AddCallback
 }
 
 /*
     * 'isPlaying' isn't reactivity in frame() function >> isPlaying should be reactivity in frame()
     * dispatch make rerender useRAF() >> only 'frame()' should be re run with RAF
 */
-
-type RAFCallbacks<T> = {
-    [ key: string ]: ( isPlaying?: boolean ) => T
-}
 
 export default function useRAF(): IUseRAF {
     const CYCLE_SPEED = 10000
@@ -26,7 +34,7 @@ export default function useRAF(): IUseRAF {
     const { isPlaying } = useContext( CycleContext )
     const dispatchProgress = useContext( ProgressDispatchContext )
     const _isPlaying: MutableRefObject<boolean> = useRef( isPlaying )
-    const rafCallbacks: MutableRefObject<RAFCallbacks<unknown>> = useRef({})
+    const rafCallbacks: MutableRefObject<RenderingFunctions> = useRef({})
 
     function done() {
         start.current = 0
@@ -44,7 +52,7 @@ export default function useRAF(): IUseRAF {
         let progress = elapsed.current / CYCLE_SPEED * 100;
 
         // rendering functions
-        Object.values( rafCallbacks.current ).forEach( k => k( _isPlaying.current ) )
+        Object.values( rafCallbacks.current ).forEach(( fn: RenderingFunction ) => fn( _isPlaying.current ))
 
         dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: progress });
         rafId.current = window.requestAnimationFrame( frame )
@@ -63,8 +71,8 @@ export default function useRAF(): IUseRAF {
         _isPlaying.current = isPlaying
     }, [ isPlaying ])
     
-    function addCallback<T>( key: string, fn: ( isPlaying?: boolean ) => T ): void {
-        rafCallbacks.current = { ...rafCallbacks.current, ...{ key: fn }}
+    function addCallback<T>( key: string, fn: RenderingFunction<T> ): void {
+        rafCallbacks.current = { ...rafCallbacks.current, ...{ [key]: fn }}
     }
 
     return {
