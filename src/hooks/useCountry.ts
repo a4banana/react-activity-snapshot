@@ -114,6 +114,10 @@ const countryDataByUniqCountries = ( inquiries: Array<BuyerInquirySellerForWorld
     )]
 }
 
+// function getUniqs<T>( arr: T, key: string ): T {
+//     return [ ...new Set( arr.map( child => child[ key ] )) ]
+// }
+
 const getGeoPositionsByBuyerAndSeller = ( inquiries: BuyerInquirySellerForWorldMapType[], arr: CountryDataCollection ): BuyerAndSellerGeoPositionCollection =>
     inquiries.reduce((
             acc: BuyerAndSellerGeoPositionCollection,

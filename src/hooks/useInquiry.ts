@@ -15,8 +15,6 @@ export default function useInquiry(): State {
 	const { selectedCountry, selectedProduct } = selectState
 
 	const selectedInquiries = useMemo<InquiryCollection>(() => {
-		console.log( selectState, inquiries )
-		console.log( filteredBySelected( inquiries, selectState ) )
 		return filteredBySelected( inquiries, selectState )
 	}, [ selectedCountry, selectedProduct ])
 	

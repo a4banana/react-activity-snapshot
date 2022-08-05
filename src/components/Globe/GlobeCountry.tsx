@@ -1,9 +1,8 @@
 import { ThreeControllerType } from "../../utils/ThreeContorller"
 import useCountry from '../../hooks/useCountry'
-// import { InquiryContext } from '../../contexts/inquiryContext'
-import { useEffect, useContext, MutableRefObject } from "react"
+import { useEffect, useContext } from "react"
 import { Feature } from "geojson"
-import useInquiry from '../../hooks/useInquiry'
+import { SelectedContext } from "../../contexts/selectedContext"
 
 interface Props {
     threeController: ThreeControllerType
@@ -12,10 +11,12 @@ interface Props {
 }
 
 const GlobeCountry = ({ threeController, geojson, canvasDom }: Props ) => {
-    const { globe, drawCountryPoints, drawInquiryArcs, drawSelectedInquiries } = threeController
+    const { selectedCountry } = useContext( SelectedContext )
+    const { globe,
+        drawCountryPoints, drawInquiryArcs, drawSelectedInquiries, drawCountryBubble } = threeController
     const { countries, buyerAndSellerGeoPositions, countriesByProduct, buyerAndSellerGeoPositionsByProduct,
         toggleCountry } = useCountry({ globe, geojson })
-
+        
     useEffect(() => {
         drawCountryPoints( countries, canvasDom, toggleCountry )
         drawInquiryArcs( buyerAndSellerGeoPositions.current )
@@ -26,6 +27,11 @@ const GlobeCountry = ({ threeController, geojson, canvasDom }: Props ) => {
             drawSelectedInquiries( countriesByProduct, buyerAndSellerGeoPositionsByProduct.current, canvasDom, toggleCountry )
         }
     }, [ countriesByProduct, buyerAndSellerGeoPositionsByProduct ])
+
+    useEffect(() => {
+        if ( selectedCountry )
+            drawCountryBubble( selectedCountry )
+    }, [ selectedCountry ])
 
     return ( <></> )
 }

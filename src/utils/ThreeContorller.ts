@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
 import type { FeatureCollection } from 'geojson'
 
+import CountryBubble from './DrawBubble'
 import CountryPoint from './DrawCountryPoint'
 import InquiryArc from './DrawInquiryArc'
 import DrawText from './DrawText'
@@ -34,6 +35,7 @@ export type ThreeControllerType = {
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
 	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => void
 	drawSelectedInquiries: ( countries: CountryDataCollection, inqs: any, dom: HTMLDivElement, fn: Callback ) => void
+	drawCountryBubble: ( country: CountryData ) => void
 	render: ( isPlaying?: boolean ) => void
 }
 
@@ -60,6 +62,7 @@ const { drawCountryPoint, moveToCamera } = countryPoint
 const inquiryArc = InquiryArc()
 const { drawInquiryArc } = inquiryArc
 const { drawTextByCountryName } = DrawText( scene )
+const { drawBubble } = CountryBubble( scene )
 
 const pointGroup: Group = new Group()
 const lineGroup: Group = new Group()
@@ -108,6 +111,7 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		scene.add( textGroup )
 		scene.add( pointGroup )
 		scene.add( lineGroup )
+		scene.add( htmlGroup )
 
 		setRenderersSize( renderers, SCREEN_WIDTH, SCREEN_HEIGHT )
 		initCSS3DRenderer( css3DRenderer )
@@ -152,10 +156,14 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 			})
 		}
 	}
+
+	const drawCountryBubble = ( country: CountryData ): void => {
+		htmlGroup.add( drawBubble( country, cam ) )
+	}
 	
 	return {
 		renderers, scene, cam, globe, interactionManager,
-		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render, drawSelectedInquiries
+		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render, drawSelectedInquiries, drawCountryBubble
 	}
 }
 
