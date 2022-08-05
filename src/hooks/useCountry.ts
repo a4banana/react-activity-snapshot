@@ -43,10 +43,8 @@ type BuyerAndSellerGeoPositionCollection = Array<BuyerAndSellerGeoPosition>
 export default function useCountry({ globe, geojson }: Props ): UseCountry {
     const { inquiries, selectedInquiries } = useInquiry()
     const initialState = getCountryDataCollection( countryDataByUniqCountries( inquiries ), geojson, globe )
-
     const [ countries, setCountries ] = useState<CountryDataCollection>( initialState )
     const [ countriesByProduct, setCountriesByProduct ] = useState<CountryDataCollection>([])
-
     const buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef(getGeoPositionsByBuyerAndSeller( inquiries, countries ))
     const buyerAndSellerGeoPositionsByProduct: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef([])
     const dispatchSelected = useContext( SelectedDispatchContext )
@@ -152,9 +150,7 @@ const hasCountry = ( countries: CountryDataCollection, iso_a2: string ): boolean
 }
 
 const createCountry = ( iso_a2: string, name: string, position: GeoPosition ): CountryData => {
-    const selected = false
-    const disabled = false
-    return { iso_a2, name, position, selected, disabled }
+    return { iso_a2, name, position, selected: false, disabled: false }
 }
 
 const getCountryGeoCoods = ( features: Array<Feature>, iso_a2: string, globe: ThreeGlobe): CountryGeoCoods | void => {
@@ -174,6 +170,7 @@ const getCountryGeoCoods = ( features: Array<Feature>, iso_a2: string, globe: Th
 	}
 }
 
+// Utils
 const _getCountryByCode = ( features: Array<Feature>, iso_a2: string ) => {
 	return features.find(( g: Feature ) => g.properties!.iso_a2 === iso_a2 ) || undefined
 }
