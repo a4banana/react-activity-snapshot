@@ -1,4 +1,4 @@
-import { createContext, Dispatch, useReducer } from "react";
+import { createContext, Dispatch, useEffect, useReducer } from "react";
 import type { ReactNode } from "react";
 
 export const CycleContext = createContext<CycleState>( {} as CycleState )
@@ -44,6 +44,10 @@ function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
 
 export function CycleProvider({ children }: { children: ReactNode }) {
     const [ cycle, dispatch ] = useReducer( cycleReducer, initialState )
+
+    // useEffect(() => {
+    //     console.log( cycle )
+    // }, [ cycle ])
 
     return (
         <CycleContext.Provider value={ cycle }>

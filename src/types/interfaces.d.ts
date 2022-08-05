@@ -19,12 +19,12 @@ interface IProduct extends Product {
 }
 
 // inquiry by count / or specific date
-type Inquiry = {
-    buyer: string
-    seller: string
-    product: Product
-    createdAt: Date
-}
+// type Inquiry = {
+//     buyer: string
+//     seller: string
+//     product: Product
+//     createdAt: Date
+// }
 
 interface InquiryData {
     inquiries: number
@@ -90,8 +90,12 @@ type InquiryCount = {
 	products: number
 }
 
+type Inquiry = BuyerInquirySellerForWorldMapType
+type InquiryCollection = Array<Inuqiry>
+
+// unused
 interface IInquiryDataStore {
-	inquiries: Array<BuyerInquirySellerForWorldMapType>
+	inquiries: InquiryCollection
 	counts: InquiryCount
 	cursorDate: string | null
 	selectedCountry: CountryData | null

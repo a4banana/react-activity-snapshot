@@ -47,17 +47,6 @@ export default function useCountry({ globe, geojson }: Props ): UseCountry {
     const [ countries, setCountries ] = useState<CountryDataCollection>( initialState )
     const [ countriesByProduct, setCountriesByProduct ] = useState<CountryDataCollection>([])
 
-    const buyerAndSellerReduce = (
-        acc: BuyerAndSellerGeoPositionCollection,
-        country: BuyerInquirySellerForWorldMapType
-    ): BuyerAndSellerGeoPositionCollection => {
-        const seller = getPosition( initialState, country.sellerCountry )
-        const buyer = getPosition( initialState, country.buyerCountry )
-        if (( seller && buyer ) && ( seller !== buyer )) {
-            acc.push({ seller, buyer })
-        }
-        return acc
-    }
     const buyerAndSellerGeoPositions: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef(getGeoPositionsByBuyerAndSeller( inquiries, countries ))
     const buyerAndSellerGeoPositionsByProduct: MutableRefObject<BuyerAndSellerGeoPositionCollection> = useRef([])
     const dispatchSelected = useContext( SelectedDispatchContext )
@@ -82,7 +71,7 @@ export default function useCountry({ globe, geojson }: Props ): UseCountry {
             const uniq = countryDataByUniqCountries( selectedInquiries );
             console.log( uniq )
             setCountriesByProduct(() => getCountryDataCollection( countryDataByUniqCountries( selectedInquiries ), geojson, globe) )
-            buyerAndSellerGeoPositionsByProduct.current = selectedInquiries.reduce( buyerAndSellerReduce, []) 
+            buyerAndSellerGeoPositionsByProduct.current = getGeoPositionsByBuyerAndSeller( selectedInquiries, countries )
         } else {
             setCountriesByProduct(() => [])
         }

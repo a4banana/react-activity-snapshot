@@ -2,7 +2,7 @@ import { createContext, Dispatch, useContext, useEffect, useReducer } from "reac
 import type { ReactNode } from "react";
 import { CycleDispatchContext, CycleActionTypes } from "./cycleContext";
 
-export const SelectedContext = createContext<State>( {} as State )
+export const SelectedContext = createContext<SelectState>( {} as SelectState )
 export const SelectedDispatchContext = createContext<Dispatch<Action>>( {} as Dispatch<Action> )
 
 export enum SelectedActionTypes {
@@ -12,10 +12,12 @@ export enum SelectedActionTypes {
     DESELECT_PRODUCT
 }
 
-interface State {
+type SelectBaseString = 'product' | 'country' | null;
+
+export interface SelectState {
     selectedCountry: CountryData | null
     selectedProduct: IProduct | null
-    selectBase: 'product' | 'country' | null
+    selectBase: SelectBaseString
 }
 
 interface SelectCountryAction {
@@ -34,22 +36,22 @@ interface DefaultAction {
 
 type Action = SelectCountryAction | SelectProductAction | DefaultAction
 
-const initialState: State = {
+const initialState: SelectState = {
     selectedCountry: null,
     selectedProduct: null,
     selectBase: null
 }
 
-function selectedReducer( state: State, action: Action ): State {
+function selectedReducer( state: SelectState, action: Action ): SelectState {
     switch ( action.type ) {
         case SelectedActionTypes.DESELECT_COUNTRY:
             return { ...state, selectedCountry: null, selectBase: ( state.selectedProduct ) ? 'product' : null }
         case SelectedActionTypes.DESELECT_PRODUCT:
             return { ...state, selectedProduct: null, selectBase: ( state.selectedCountry ) ? 'country' : null  }
         case SelectedActionTypes.SELECT_COUNTRY:
-            return { ...state, selectedCountry: action.country, selectBase: ( state.selectedProduct ) ? 'product' : 'country' }
+            return { ...state, selectedCountry: action.country, selectBase: checkBase( action.type, state )}
         case SelectedActionTypes.SELECT_PRODUCT:
-            return { ...state, selectedProduct: action.product, selectBase: ( state.selectedCountry ) ? 'country' : 'product' }
+            return { ...state, selectedProduct: action.product, selectBase: checkBase( action.type, state )}
         default:
             throw new Error( 'no action type' )
     }
@@ -72,4 +74,15 @@ export function SelectedProvider({ children }: { children: ReactNode }) {
             </SelectedDispatchContext.Provider>
         </SelectedContext.Provider>
     )
+}
+
+const checkBase = ( actionType: SelectedActionTypes, { selectedCountry, selectedProduct, selectBase }: SelectState ): SelectBaseString => {
+    switch( actionType ) {
+        case SelectedActionTypes.SELECT_COUNTRY:
+            return ( selectBase === 'product' && selectedProduct ) ? 'product' : 'country'
+        case SelectedActionTypes.SELECT_PRODUCT:
+            return ( selectBase === 'country' && selectedCountry ) ? 'country' : 'product'
+        default:
+            return null
+    }
 }

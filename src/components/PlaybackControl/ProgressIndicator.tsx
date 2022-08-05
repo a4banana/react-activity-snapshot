@@ -26,7 +26,7 @@ export default function ProgressIndicator() {
     const loadingStyle: CSSProperties = isLoading ? { strokeDashoffset: reverseOffset } : {}
 
     function transitionEndHandler( event: ComponentTransitionEvent<SVGCircleElement> ): void {
-        console.log( event )
+        // console.log( event )
     }
     
     const classes = [
