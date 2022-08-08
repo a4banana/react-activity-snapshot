@@ -2,6 +2,7 @@ import './ProgressIndicator.sass'
 import { SyntheticEvent, useContext, CSSProperties } from 'react'
 import { CycleContext } from '../../contexts/cycleContext'
 import { ProgressContext } from '../../contexts/progressContext'
+import { QueuesDispatchContext, QueuesActionType } from '../../contexts/queuesContext'
 
 interface ComponentTransitionEvent<T = Element> extends SyntheticEvent<T, TransitionEvent> {
     elapsedTime: number;
@@ -13,10 +14,9 @@ export default function ProgressIndicator() {
     const CIRCLE_SIZE: number = 16
     const STORKE_WIDTH: number = 2.8
 
-    const isLoading = false
-    
-    const { isPlaying } = useContext( CycleContext )
+    const { isPlaying, isLoading } = useContext( CycleContext )
     const { progress } = useContext( ProgressContext )
+    const dispatchQueues = useContext( QueuesDispatchContext )
 
     const strokeWidth: number = isPlaying ? STORKE_WIDTH : STORKE_WIDTH / 3 
     const radius: number = CIRCLE_SIZE - ( strokeWidth / 2 )
@@ -26,13 +26,14 @@ export default function ProgressIndicator() {
     const loadingStyle: CSSProperties = isLoading ? { strokeDashoffset: reverseOffset } : {}
 
     function transitionEndHandler( event: ComponentTransitionEvent<SVGCircleElement> ): void {
-        // console.log( event )
+        if ( event.propertyName === 'stroke-dashoffset' )
+            dispatchQueues({ type: QueuesActionType.DONE_QUEUE, key: 'progress_indicator' });
     }
     
     const classes = [
         'indicator-svg',
-        ( isPlaying ? 'is-playing' : '' ),
-        ( isLoading ? 'is-loading' : '' ),
+        ( isPlaying && 'is-playing' ),
+        ( isLoading && 'is-loading' ),
     ].join( ' ' )
 
     return (

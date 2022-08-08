@@ -7,20 +7,27 @@ import type { SelectState } from '../contexts/selectedContext'
 interface State {
 	inquiries: InquiryCollection
 	selectedInquiries: InquiryCollection
+	counts: InquiryCount
 }
 
 export default function useInquiry(): State {
-	const { inquiries } = useContext( InquiryContext )!
+	const { data } = useContext( InquiryContext )
 	const selectState = useContext( SelectedContext )
 	const { selectedCountry, selectedProduct } = selectState
+	const inquiries = data.inquiries
 
 	const selectedInquiries = useMemo<InquiryCollection>(() => {
 		return filteredBySelected( inquiries, selectState )
 	}, [ selectedCountry, selectedProduct ])
-	
+
+	const counts = useMemo<InquiryCount>(() => {
+		return calcInquiryDataCount( inquiries )
+	}, [ inquiries ])
+
 	return {
 		inquiries,
-		selectedInquiries
+		selectedInquiries,
+		counts
 	}
 }
 
@@ -43,6 +50,19 @@ const hasCountries = ({ buyerCountry, sellerCountry }: Inquiry, { iso_a2 }: Coun
 	( buyerCountry === iso_a2 || sellerCountry === iso_a2 )
 
 const hasProduct = ({ product }: Inquiry, { id }: IProduct ): boolean => product.id === id
+
+const calcInquiryDataCount = ( inquiries: InquiryCollection ): InquiryCount => {
+	return {
+		inquiries: inquiries.length,
+		sellers: getUniqLengthOfArray<InquiryCollection, Inquiry>( inquiries, c => c.sellerCountry ),
+		buyers: getUniqLengthOfArray<InquiryCollection, Inquiry>( inquiries, c => c.buyerCountry ),
+		products: getUniqLengthOfArray<InquiryCollection, Inquiry>( inquiries, c => c.product.name )
+	}
+}
+
+const getUniqLengthOfArray = <T, U = any>( arr: T, filter: ( child: U ) => void ): number => {
+	return [ ...new Set( arr.map( filter )) ].length
+}
 
 /*
 	1. Country 선택시

@@ -18,6 +18,8 @@ const GlobeCountry = ({ threeController, geojson, canvasDom }: Props ) => {
         toggleCountry } = useCountry({ globe, geojson })
         
     useEffect(() => {
+        
+        
         drawCountryPoints( countries, canvasDom, toggleCountry )
         drawInquiryArcs( buyerAndSellerGeoPositions.current )
     }, [])

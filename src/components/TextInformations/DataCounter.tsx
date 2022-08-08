@@ -7,7 +7,6 @@ interface Prop {
 }
 
 export default function DataCounter({ value, label, duration }: Prop) {
-
     return (
         <div className="data-info">
             <div className="numeric-data">{ value }</div>

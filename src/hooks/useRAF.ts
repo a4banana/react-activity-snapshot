@@ -1,6 +1,6 @@
 import { ProgressDispatchContext, ProgressActionTypes } from './../contexts/progressContext';
-import { useContext, useState, useEffect, useRef, MutableRefObject, useCallback } from "react"
-import { CycleContext } from "../contexts/cycleContext"
+import { useContext, useEffect, useRef, MutableRefObject } from "react"
+import { CycleContext, CycleDispatchContext, CycleActionTypes } from "../contexts/cycleContext"
 
 interface RenderingFunction<T = void> {
     ( isPlaying?: boolean ): T
@@ -25,8 +25,9 @@ export default function useRAF(): IUseRAF {
     const previous: MutableRefObject<number> = useRef( 0 )
     const rafId: MutableRefObject<number | null> = useRef( null )
     
-    const { isPlaying } = useContext( CycleContext )
     const dispatchProgress = useContext( ProgressDispatchContext )
+    const { isPlaying } = useContext( CycleContext )
+    const dispatchCycle = useContext( CycleDispatchContext )
     const _isPlaying: MutableRefObject<boolean> = useRef( isPlaying )
     const rafCallbacks: MutableRefObject<RenderingFunctions> = useRef({})
 
@@ -34,8 +35,9 @@ export default function useRAF(): IUseRAF {
         start.current = 0
         elapsed.current = 0
         previous.current = 0
-        rafId.current = null
+        // rafId.current = null
 
+        dispatchCycle({ type: CycleActionTypes.LOAD_NEXT_CYCLE })
         dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: 0 })
     }
 
@@ -49,11 +51,10 @@ export default function useRAF(): IUseRAF {
         Object.values( rafCallbacks.current ).forEach(( fn: RenderingFunction ) => fn( _isPlaying.current ))
 
         dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: progress });
-        rafId.current = window.requestAnimationFrame( frame )
+        rafId.current = window.requestAnimationFrame( frame );
         
-        // ( elapsed.current <= CYCLE_SPEED )
-        //     ? rafId.current = window.requestAnimationFrame( frame )
-        //     : done()
+        if ( elapsed.current > CYCLE_SPEED ) done()
+
     }
 
     useEffect(() => {
@@ -63,6 +64,7 @@ export default function useRAF(): IUseRAF {
 
     useEffect(() => {
         _isPlaying.current = isPlaying
+        console.log( _isPlaying.current, isPlaying )
     }, [ isPlaying ])
     
     function addCallback<T>( key: string, fn: RenderingFunction<T> ): void {

@@ -7,8 +7,8 @@ import useProducts from '../../hooks/useProducts'
 
 export default function ProductCardList() {
     const PRODUCT_COUNT: number = 8
-    const inquiries = useContext( InquiryContext )
-    const { products, toggleProduct } = useProducts( inquiries!.inquiries, PRODUCT_COUNT )
+    const { data } = useContext( InquiryContext )
+    const { products, toggleProduct } = useProducts( data.inquiries, PRODUCT_COUNT )
 
     const clickHandler = ( event: MouseEvent<HTMLLIElement>, id: number ) => {
         toggleProduct( id )
