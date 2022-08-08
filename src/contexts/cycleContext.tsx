@@ -1,5 +1,6 @@
-import { createContext, Dispatch, useEffect, useReducer } from "react";
+import { createContext, Dispatch, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
+import { QueuesDispatchContext,  } from "./queuesContext";
 
 export const CycleContext = createContext<CycleState>( {} as CycleState )
 export const CycleDispatchContext = createContext<Dispatch<CycleAction>>( {} as Dispatch<CycleAction> )
@@ -8,7 +9,8 @@ export enum CycleActionTypes {
     TOGGLE_PLAY, 
     PAUSE,
     PLAY,
-    LOADING,
+    LOAD_NEXT_CYCLE,
+    NEXT_CYCLE
 }
 
 type CycleState = {
@@ -23,8 +25,8 @@ export interface CycleAction {
 
 const initialState: CycleState = {
     cycle: 0, 
-    isPlaying: true,
-    isLoading: false
+    isPlaying: false,
+    isLoading: true
 }
 
 function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
@@ -36,8 +38,13 @@ function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
         case CycleActionTypes.TOGGLE_PLAY:
             let isPlaying: boolean = !state.isPlaying
             return { ...state, isPlaying }
+        case CycleActionTypes.LOAD_NEXT_CYCLE:
+            return { ...state, isLoading: true, isPlaying: false }
+        case CycleActionTypes.NEXT_CYCLE:
+            // next cycle and 
+            return { ...state, cycle: ++state.cycle, isLoading: false, isPlaying: true }
         default: {
-            throw new Error( 'no action type' )
+            throw new Error( 'No action type' )
         }
     }
 }
@@ -45,9 +52,13 @@ function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
 export function CycleProvider({ children }: { children: ReactNode }) {
     const [ cycle, dispatch ] = useReducer( cycleReducer, initialState )
 
-    // useEffect(() => {
-    //     console.log( cycle )
-    // }, [ cycle ])
+    const { isLoading } = cycle
+
+    useEffect(() => {
+        if ( isLoading ) {
+            
+        }
+    }, [ isLoading ])
 
     return (
         <CycleContext.Provider value={ cycle }>

@@ -1,8 +1,8 @@
 import './TridgeGlobe.sass'
-import { memo, useEffect, useRef } from "react"
+import { memo, useContext, useEffect, useRef } from "react"
 
 import GlobeCountry from './GlobeCountry'
-// import { QueuesContext, QueuesDispatchContext, QueuesActionType } from "../../contexts/componentReadyContext"
+import { QueuesDispatchContext, QueuesActionType } from "../../contexts/queuesContext"
 import useRAF from '../../hooks/useRAF'
 import type { FeatureCollection } from 'geojson'
 
@@ -14,11 +14,15 @@ interface Props {
 }
 
 const TridgeGlobe = memo(({ geojson }: Props) => {
+    const dispatchQueues = useContext( QueuesDispatchContext )
     const canvasDom = useRef<HTMLDivElement | null>( null )
     const threeController = useRef<ThreeControllerType | null>( null )
     const { addCallback } = useRAF()
-    
+
+
     useEffect(() => {
+        // add queue
+        dispatchQueues({ type: QueuesActionType.ADD_QUEUE, key: 'three-init' })
         threeController.current = ThreeController( geojson )
         const { renderers, render, init } = threeController.current
         init()
