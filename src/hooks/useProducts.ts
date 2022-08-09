@@ -7,11 +7,11 @@ type ProductCollection = Array<IProduct>
 interface IUseProducts {
     products: ProductCollection
     toggleProduct: ( id: number ) => void
+    putData: ( inquiries: InquiryCollection ) => void
 }
 
-export default function useProducts( inquiries: Array<BuyerInquirySellerForWorldMapType>, num: number ): IUseProducts {
-    const initialState = inquiries.reduce<ProductCollection>( productsReducer, [] ).sort( sortProductByCount )
-    const [ products, setProducts ] = useState<ProductCollection>( initialState )
+export default function useProducts(): IUseProducts {
+    const [ products, setProducts ] = useState<ProductCollection>([] as ProductCollection)
     const { selectedCountry } = useContext( SelectedContext )
     const dispatchSelected = useContext( SelectedDispatchContext )
     const { isPlaying } = useContext( CycleContext )
@@ -23,6 +23,10 @@ export default function useProducts( inquiries: Array<BuyerInquirySellerForWorld
         setProducts( prev => prev.map(( p: IProduct ) => {
             return { ...p, selected: ( p.selected && p.id === id ) ? false : ( p.id === id ) }
         }))
+    }
+
+    const putData = ( inquiries: InquiryCollection ): void => {
+        setProducts( inquiries.reduce<ProductCollection>( productsReducer, [] ).sort( sortProductByCount ))
     }
 
     useEffect(() => {
@@ -44,7 +48,8 @@ export default function useProducts( inquiries: Array<BuyerInquirySellerForWorld
 
     return {
         products,
-        toggleProduct
+        toggleProduct,
+        putData
     }
 }
 
@@ -90,7 +95,7 @@ function hasSelected( products: ProductCollection ): boolean {
 // inquiries to products colleciton ( create or update )
 function productsReducer(
     acc: ProductCollection,
-    { product, sellerCountry, buyerCountry }: BuyerInquirySellerForWorldMapType
+    { product, sellerCountry, buyerCountry }: Inquiry
 ): ProductCollection {
     return ( !hasProduct( acc, product.id )) ? createProduct( acc, product, sellerCountry, buyerCountry ) : updateProduct( acc, product.id )
 }

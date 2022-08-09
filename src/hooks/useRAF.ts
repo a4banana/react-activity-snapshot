@@ -35,10 +35,9 @@ export default function useRAF(): IUseRAF {
         start.current = 0
         elapsed.current = 0
         previous.current = 0
-        // rafId.current = null
 
-        dispatchCycle({ type: CycleActionTypes.LOAD_NEXT_CYCLE })
         dispatchProgress({ type: ProgressActionTypes.SET_PROGRESS, value: 0 })
+        dispatchCycle({ type: CycleActionTypes.LOAD_NEXT })
     }
 
     const frame = ( timestamp: number ) => {
@@ -54,7 +53,6 @@ export default function useRAF(): IUseRAF {
         rafId.current = window.requestAnimationFrame( frame );
         
         if ( elapsed.current > CYCLE_SPEED ) done()
-
     }
 
     useEffect(() => {
@@ -64,7 +62,6 @@ export default function useRAF(): IUseRAF {
 
     useEffect(() => {
         _isPlaying.current = isPlaying
-        console.log( _isPlaying.current, isPlaying )
     }, [ isPlaying ])
     
     function addCallback<T>( key: string, fn: RenderingFunction<T> ): void {

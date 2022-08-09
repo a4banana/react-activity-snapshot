@@ -64,10 +64,8 @@ export default function useCountry({ globe, geojson }: Props ): UseCountry {
     }, [ isPlaying ])
 
     useEffect(() => {
-        console.log( selectedInquiries )
         if ( selectedInquiries.length ) {
             const uniq = countryDataByUniqCountries( selectedInquiries );
-            console.log( uniq )
             setCountriesByProduct(() => getCountryDataCollection( countryDataByUniqCountries( selectedInquiries ), geojson, globe) )
             buyerAndSellerGeoPositionsByProduct.current = getGeoPositionsByBuyerAndSeller( selectedInquiries, countries )
         } else {
@@ -113,10 +111,6 @@ const countryDataByUniqCountries = ( inquiries: Array<BuyerInquirySellerForWorld
             ...new Set( inquiries.map( inq => inq.buyerCountry ))]
     )]
 }
-
-// function getUniqs<T>( arr: T, key: string ): T {
-//     return [ ...new Set( arr.map( child => child[ key ] )) ]
-// }
 
 const getGeoPositionsByBuyerAndSeller = ( inquiries: BuyerInquirySellerForWorldMapType[], arr: CountryDataCollection ): BuyerAndSellerGeoPositionCollection =>
     inquiries.reduce((
@@ -180,19 +174,27 @@ const _getCountryByCode = ( features: Array<Feature>, iso_a2: string ) => {
 }
 
 const _hasFeatureAndThreeObj = ( feature: Feature, iso_a2: string ): boolean => {
-	if ( feature && Object.getOwnPropertyNames( feature ).includes( '__threeObj' ) ) {
+    return ( feature && Object.getOwnPropertyNames( feature ).includes( '__threeObj' )) ? true : false
+	
+    /* dev
+    if ( feature && Object.getOwnPropertyNames( feature ).includes( '__threeObj' ) ) {
 		return true
 	} else {
 		console.error( iso_a2 + ' data not found in geojson' )
 		return false
 	}
+    */
 }
 
 const _isValidCoord = ( pos: { x: number, y: number, z: number }, iso_a2: string, name: string ): boolean => {
+    return ( pos.x !== 0 && pos.y !== 0 && pos.z !== 0 ) ? true : false
+
+    /* dev
 	if ( pos.x !== 0 && pos.y !== 0 && pos.z !== 0 ) {
 		return true
 	} else {
 		console.error( iso_a2 + ' is wrong position -- ' + name )
 		return false
 	}
+    */
 }

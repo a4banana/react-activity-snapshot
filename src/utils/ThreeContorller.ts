@@ -34,8 +34,9 @@ export type ThreeControllerType = {
 	drawInquiryArcs: ( inqs: { buyer: GeoPosition, seller: GeoPosition }[] )=> void
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
 	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => void
-	drawSelectedInquiries: ( countries: CountryDataCollection, inqs: any, dom: HTMLDivElement, fn: Callback ) => void
+	drawSelectedInquiries: ( countries: CountryDataCollection, inqs: any, base: string, dom: HTMLDivElement, fn: Callback, selectedCountry: CountryData ) => void
 	drawCountryBubble: ( country: CountryData ) => void
+	removeSelectedInquiries: () => void
 	render: ( isPlaying?: boolean ) => void
 }
 
@@ -82,13 +83,13 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		
 		if ( isPlaying ) {
 			updatePath( lineGroup )
-			updatePoint( pointGroup )
 			htmlGroup.children.forEach( c => c.lookAt( cam.position ) )
 		}
+		updatePoint( pointGroup )
 	}
 
-	function init(): void {
-		drawHexPolygons( globe, geojson, COUNTRY_POLYGON_COLOR )
+	async function init(): Promise<void> {
+		await drawCountryPolygon( geojson )
 
 		scene.add( globe )
 		scene.add( new AmbientLight( LIGHT_COLOR, 1 ))
@@ -115,39 +116,90 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 
 		setRenderersSize( renderers, SCREEN_WIDTH, SCREEN_HEIGHT )
 		initCSS3DRenderer( css3DRenderer )
-		// render first frame
+		
+		// render first frame for globe
 		render()
 	}
 
 	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => {
-		pointGroup.children = []
+		removeChildFromGroup( pointGroup )
 		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom, fn )))
 	}
 
 	const drawInquiryArcs = ( inqs: { buyer: GeoPosition, seller: GeoPosition }[]) => {
-		lineGroup.children = []
+		removeChildFromGroup( lineGroup )
 		inqs.forEach(({ buyer, seller }) => lineGroup.add( drawInquiryArc( buyer, seller )))
 	}
 	
-	const drawCountryPolygon = ( geojson: FeatureCollection ): void => drawHexPolygons( globe, geojson, COUNTRY_POLYGON_COLOR )
+	const drawCountryPolygon = async ( geojson: FeatureCollection ): Promise<void> => {
+		await drawHexPolygons( globe, geojson, COUNTRY_POLYGON_COLOR )
+		// dirty part for three-globe
+		return new Promise( resolve => setTimeout( resolve, 1))
+	}
 	
-	const drawSelectedInquiries = ( countries: CountryDataCollection, inqs: BuyerAndSellerGeoPosition[], dom: HTMLDivElement, fn: Callback ): void => {
-		initBeforeDrawSelected()
+	const drawSelectedInquiries = (
+		countries: CountryDataCollection,
+		inqs: BuyerAndSellerGeoPosition[],
+		base: string,
+		dom: HTMLDivElement,
+		fn: Callback,
+		selectedCountry: CountryData
+	): void => {
+		
+		// initBeforeDrawSelected()
 
-		if ( countries.length ) {
-			// draw Country focused
+		switch ( base ) {
+			case 'country':
+				dc()
+				break;
+			case 'product':
+				dp()
+				break;
+		}
+
+		function dc() {
+			// unused
+			removeChildFromGroup( textGroup )
+			removeChildFromGroup( focusedLineGroup )
+			removeChildFromGroup( focusedPointGroup )
+			textGroup.visible = false
+			focusedPointGroup.visible = false
+			lineGroup.visible = false
+			pointGroup.visible = true
+
+			// init
+			focusedLineGroup.children = []
+			
+			pointGroup.children.forEach( point => {
+				point.userData.selected = ( point.userData.iso_a2 === selectedCountry.iso_a2 ) ? true : false
+			})
+
+			inqs.forEach(({ buyer, seller }) => {
+				const line = drawInquiryArc( buyer, seller )
+				// @ts-ignore
+				gsap.to( line.material.uniforms.dashTranslate, { value: 1, duration: 2, ease: "Power3.out"})
+				focusedLineGroup.add( line )
+			})
+		}
+
+		function dp() {
+			removeChildFromGroup( textGroup )
+			removeChildFromGroup( focusedLineGroup )
+			removeChildFromGroup( focusedPointGroup )
+			pointGroup.children.forEach( point => point.userData.selected = false )
+			lineGroup.visible = false
+			pointGroup.visible = false
+			focusedPointGroup.visible = true
+			textGroup.visible = true
+
 			countries.forEach(( country: CountryData ) => {
 				focusedPointGroup.add( drawCountryPoint( country, dom, fn ))
 				const textMesh: Mesh | undefined = drawTextByCountryName( country )
 				if ( textMesh ) textGroup.add( textMesh )
 			})
 
-			// move To Random country point
 			moveToCamera( countries[Math.floor( Math.random() * countries.length )] )
-		}
 
-		if ( inqs.length ) {
-			// draw Path
 			inqs.forEach(({ buyer, seller }) => {
 				const line = drawInquiryArc( buyer, seller )
 				// @ts-ignore
@@ -157,30 +209,37 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		}
 	}
 
+	const removeSelectedInquiries = () => {
+		removeChildFromGroup( textGroup )
+		removeChildFromGroup( focusedLineGroup )
+		removeChildFromGroup( focusedPointGroup )
+		removeChildFromGroup( htmlGroup )
+		pointGroup.visible = true
+		lineGroup.visible = true
+		pointGroup.children.forEach( point => point.userData.selected = false )
+	}
+
 	const drawCountryBubble = ( country: CountryData ): void => {
-		htmlGroup.add( drawBubble( country, cam ) )
+		removeChildFromGroup( htmlGroup )
+		htmlGroup.add( drawBubble( country ) )
 	}
 	
 	return {
 		renderers, scene, cam, globe, interactionManager,
-		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render, drawSelectedInquiries, drawCountryBubble
+		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render, drawSelectedInquiries, drawCountryBubble, removeSelectedInquiries
 	}
 }
 
-const initBeforeDrawSelected = (): void => {
-	textGroup.children = []
-	focusedLineGroup.children = []
-	focusedPointGroup.children = []
-	pointGroup.children.forEach( point => point.userData.selected = false )
-	pointGroup.visible = false
-	lineGroup.visible = false
+const removeChildFromGroup = ( group: Group ) => {
+	group.children.forEach( child => group.remove( child ))
+	group.children = []
 }
 
-const drawHexPolygons = ( globe: ThreeGlobe, { features }: FeatureCollection, color: string ): void => {
+const drawHexPolygons = ( globe: ThreeGlobe, { features }: FeatureCollection, color: string ) => {
 	globe.hexPolygonsData( features )
 		.hexPolygonResolution( 3 )
 		.hexPolygonMargin( .7 )
-		.hexPolygonColor( () => color )
+		.hexPolygonColor(() => color )
 }
 
 const setCamera = ( cam: PerspectiveCamera, width: number, height: number, CAM_INITIAL_Z: number ): void => {
@@ -195,7 +254,7 @@ const setOrbitControl = ( ob: OrbitControls, opts: {[ key: string ]: unknown } )
 }
 
 const setRenderersSize = ( renderes: Rendereres, width: number, height: number ): void => {
-	renderes.forEach( renderer => renderer.setSize( width, height ) )
+	renderes.forEach( renderer => renderer.setSize( width, height ))
 }
 
 const initCSS3DRenderer = ( css3DRenderer: CSS3DRenderer ): void => {
@@ -206,10 +265,8 @@ const initCSS3DRenderer = ( css3DRenderer: CSS3DRenderer ): void => {
 }
 
 function updatePath( lineGroup: Group ): void {
-	lineGroup.children.forEach( child => {
-		// @ts-ignore
-		child.material.uniforms.dashTranslate.value += 0.0015
-	})
+	// @ts-ignore
+	lineGroup.children.forEach( child => child.material.uniforms.dashTranslate.value += 0.0015 )
 }
 
 function updatePoint( pointGroup: Group ): void {

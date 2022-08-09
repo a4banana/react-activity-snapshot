@@ -1,6 +1,6 @@
 import { createContext, Dispatch, useContext, useEffect, useReducer } from "react";
 import type { ReactNode } from "react";
-import { CycleDispatchContext, CycleActionTypes } from "./cycleContext";
+import { CycleDispatchContext, CycleActionTypes, CycleContext } from "./cycleContext";
 
 export const SelectedContext = createContext<SelectState>( {} as SelectState )
 export const SelectedDispatchContext = createContext<Dispatch<Action>>( {} as Dispatch<Action> )
@@ -59,12 +59,16 @@ function selectedReducer( state: SelectState, action: Action ): SelectState {
 
 export function SelectedProvider({ children }: { children: ReactNode }) {
     const [ selected, dispatch ] = useReducer( selectedReducer, initialState )
+    const { isPlaying, isLoading } = useContext( CycleContext )
     const dispatchCycle = useContext( CycleDispatchContext )
-
     useEffect(() => {
-        ( selected.selectedCountry || selected.selectedProduct )
-            ? dispatchCycle({ type: CycleActionTypes.PAUSE })
-            : dispatchCycle({ type: CycleActionTypes.PLAY })
+        if (( selected.selectedCountry || selected.selectedProduct ) && isPlaying ) {
+            dispatchCycle({ type: CycleActionTypes.PAUSE })
+        }
+
+        if ( !selected.selectedCountry && !selected.selectedProduct && !isPlaying && !isLoading ) {
+            dispatchCycle({ type: CycleActionTypes.PLAY })
+        }
     }, [ selected ])
 
     return (

@@ -1,8 +1,12 @@
-import { Vector3, Scene, PerspectiveCamera } from 'three'
+import { Vector3, Scene } from 'three'
 import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer'
 import { polar2Cartesian } from './PolarAndCartesian'
+import chevron from '../assets/chevron.svg'
 
 export default function CountryBubble( scene: Scene ) {
+	const HOST_URI: string = "https://www.tridge.com/sellers/browse"
+	const COUNTRY_URL_PARAM: string = "country_In"
+
 	// init DOM
 	const container: HTMLDivElement = document.createElement( 'div' )
 	container.className = 'container'
@@ -17,33 +21,30 @@ export default function CountryBubble( scene: Scene ) {
 
 	const link: HTMLAnchorElement = document.createElement( 'a' )
 	link.className = 'country-link'
-	link.href = ''
 	header.appendChild( link )
 	
 	const linkLabel: HTMLSpanElement = document.createElement( 'span' )
 	linkLabel.textContent = 'Browse Suppliers'
 	link.appendChild( linkLabel )
 	
-	const chevronIcon = document.createElement( 'svg' )
-	chevronIcon.setAttribute( 'viewBox', '0 0 24 24' )
-	chevronIcon.className = 'icon-chevron'
+	const chevronIcon = document.createElement( 'img' )
+	chevronIcon.src = chevron
 	link.appendChild( chevronIcon )
 	
-	const path = document.createElement( 'path' )
-	path.setAttribute( 'd', 'M9 18 15 12 9 6' )
-	path.setAttribute( 'storke', 'rgba( 110, 161, 237, 1 )' )
-	chevronIcon.appendChild( path )
-
 	const p: HTMLParagraphElement = document.createElement( 'p' )
 	p.className = 'country-body'
 	container.appendChild( p )
 
-	function drawBubble( country: CountryData, cam: PerspectiveCamera ) {
+	function drawBubble( country: CountryData ) {
 		const div = document.createElement( 'div' )
 		div.className = 'country-bubble'
 		div.appendChild( container )
 		title.textContent = country.name
 		p.textContent = `20 inquiries were recieved by suppliers`
+
+		// const productQuery: ComputedRef<string> = computed(() => selectedProduct.value ? `&supplyingProducts_In=${ selectedProduct.value.id }` : '' )
+		const href = `${HOST_URI}?${COUNTRY_URL_PARAM}=${ country.iso_a2 }`
+		link.href = href
 		
 		// div.addEventListener( 'click', ()=> console.log( country.name, country.iso_a2 ))
 		

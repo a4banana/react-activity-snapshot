@@ -38,13 +38,15 @@ const initialState: State = {
 export const InquiryContext = createContext<State>({} as State)
 export const InquiryDispatchContext = createContext<Dispatch<InquiryAction>>({} as Dispatch<InquiryAction>)
 
-function inqReducer( state: State, { type }: InquiryAction ): State {
-    switch( type ) {
+function inqReducer( state: State, action: InquiryAction ): State {
+    switch( action.type ) {
         case InquiryActionType.LOAD: {
+            // console.log( 'load' )
             return { ...state, isLoading: true }
         }
         case InquiryActionType.DONE: {
-            return { ...state, isLoading: true }
+            // console.log( 'done' )
+            return { ...state, isLoading: false, data: action.data }
         }
     }
 }
@@ -62,11 +64,12 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
 
 
 //  * DUMMY FOR DEV: SHOULD BE REMOVED
-export function getInq( dispatch: Dispatch<InquiryAction>, cursorDate: string ) {
-    const action = async ( dispatch: Dispatch<InquiryAction>, cursorDate: string ): Promise<void> => {
+export function getInq() {
+    const action = async ( dispatch: Dispatch<InquiryAction>, cursorDate: number ): Promise<void> => {
         dispatch({ type: InquiryActionType.LOAD })
         try {
-            const data = await dummyFetch()
+            let cursor = ( cursorDate % 2 ) ? true : false
+            const data = await dummyFetch( cursor )
             dispatch({ type: InquiryActionType.DONE, data })
         } catch( err ) {
             // never happen in dummy
@@ -78,10 +81,10 @@ export function getInq( dispatch: Dispatch<InquiryAction>, cursorDate: string ) 
 }
 
 //  * DUMMY FOR DEV: SHOULD BE REMOVED
-async function dummyFetch(): Promise<BuyerInquirySellerForWorldMapList> {
+async function dummyFetch( cursor: boolean ): Promise<BuyerInquirySellerForWorldMapList> {
     return new Promise( resolve => {
         setTimeout( function() {
-            resolve( inqData2 )
-        }, 2000 )
+            ( cursor ) ? resolve( inqData ) : resolve( inqData2 )
+        }, 500 )
     })    
 }
