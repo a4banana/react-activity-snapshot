@@ -17,7 +17,7 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 		Object.assign( mesh.position, polar2Cartesian( lat, lng, COUNTRY_POINT_ALT ))
 		mesh.scale.x = mesh.scale.y = getPixelsPerDegree( 0 )
 		mesh.scale.z = getPixelsPerDegree( 0.1 )
-		
+
 		mesh.lookAt( new Vector3( 0, 0, 0 ))
 		mesh.rotateY( Math.PI )
 		mesh.userData = {
@@ -37,7 +37,7 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 		gsap.to( mesh.scale, { x: r, y: r, duration: Math.random() * 1 })
 		return mesh
 	}
-
+	
 	function onMouseEnter( event: any, dom: HTMLDivElement | undefined ) {
 		let r = getPixelsPerDegree( 1.2 )
 		dom!.classList.add( 'hoverd' )
@@ -59,7 +59,6 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 		const point_distance: number = point.distanceTo( center )
 		const { x, y, z }: Vector3 = point.clone().multiplyScalar( cam_distance / point_distance )
 		// select country
-		
 		if ( event.target.parent.visible ) callback( country.iso_a2 )
 		// cam move
 		gsap.to( obControl.object.position, { x, y, z, duration: .66, ease: 'sine.out' })
