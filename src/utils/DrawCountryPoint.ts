@@ -1,10 +1,18 @@
-import { Mesh, CircleBufferGeometry, MeshBasicMaterial, Vector3, Camera } from 'three'
+import { Mesh, CircleBufferGeometry, MeshBasicMaterial, Vector3, Camera, Group, Object3D } from 'three'
 import { polar2Cartesian, getPixelsPerDegree } from './PolarAndCartesian'
 import { InteractionManager } from 'three.interactive'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import gsap from 'gsap'
 
-export default function CountryPoint( interactionManager: InteractionManager, cam: Camera, obControl: OrbitControls ) {
+export type PointData = {
+	iso_a2: string
+	selected: boolean
+	disabled: boolean
+	blur: boolean
+	hover: boolean
+}
+
+export function CountryPoint( interactionManager: InteractionManager, cam: Camera, obControl: OrbitControls ) {
 	const COUNTRY_POINT_COLOR: number = 0x6EA1ED
 	const COUNTRY_OPACITY: number = .6
 	const COUNTRY_POINT_ALT: number = .01
@@ -20,12 +28,14 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 
 		mesh.lookAt( new Vector3( 0, 0, 0 ))
 		mesh.rotateY( Math.PI )
+
 		mesh.userData = {
 			iso_a2: country.iso_a2,
 			selected: country.selected,
 			disabled: country.disabled,
+			blur: false,
 			hover: false
-		}
+		} as PointData
 	
 		mesh.addEventListener( 'mouseover', event => onMouseEnter( event, dom ))
 		mesh.addEventListener( 'mouseleave', event => onMouseLeave( event, country, dom ))
@@ -41,14 +51,14 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 	function onMouseEnter( event: any, dom: HTMLDivElement | undefined ) {
 		let r = getPixelsPerDegree( 1.2 )
 		dom!.classList.add( 'hoverd' )
-		gsap.to( event.target.scale, { x: r, y: r, duration: .15 })
-		event.target.userData.hover = true
+		// gsap.to( event.target.scale, { x: r, y: r, duration: .15 })
+		if ( !event.target.userData.disabled ) event.target.userData.hover = true
 	}
 	
 	function onMouseLeave( event: any, country: CountryData, dom: HTMLDivElement | undefined ) {
 		let r = getPixelsPerDegree( .8 )
 		dom!.classList.remove( 'hoverd' )
-		if ( !country.selected ) gsap.to( event.target.scale, { x: r, y: r, duration: .15 })
+		// if ( !country.selected ) gsap.to( event.target.scale, { x: r, y: r, duration: .15 })
 		event.target.userData.hover = false
 	}
 	
@@ -80,4 +90,43 @@ export default function CountryPoint( interactionManager: InteractionManager, ca
 	return {
 		drawCountryPoint, moveToCamera
 	}
+}
+
+
+export function blurAllPoints( group: Group ) {
+	group.children.forEach( child => child.userData.blur = true )
+}
+
+export function unBlurAllPoints( group: Group ) {
+	group.children.forEach( child => child.userData.blur = false )
+}
+
+export function hoverPoint( point: Object3D, radius: number, opacity: number = 0.8 ) {
+	// @ts-ignore - material doesn't captured via Group
+	point.material.opacity = opacity
+	point.scale.x = point.scale.y = radius
+}
+
+export function blurPoint( point: Object3D, alpha: number, radius: number, speed: number = 0.03 ) {
+	// @ts-ignore - material doesn't captured via Group
+	if ( point.material.opacity > alpha ) point.material.opacity -= speed
+	if ( point.scale.x > radius ) point.scale.x = point.scale.y -= speed
+}
+
+export function selectPoint( point: Object3D, radius: number, speed: number = 0.03 ) {
+	// @ts-ignore - material doesn't captured via Group
+	if ( point.material.opacity < 1 ) point.material.opacity += speed
+	if ( point.scale.x < radius ) point.scale.x = point.scale.y += speed
+}
+
+export function disablePoint( point: Object3D, radius: number, opacity: number, speed: number = 0.03 ) {
+	// @ts-ignore - material doesn't captured via Group
+	if ( point.material.opacity > opacity ) point.material.opacity -= speed
+	if ( point.scale.x > radius ) point.scale.x = point.scale.y -= speed
+}
+
+export function enablePoint( point: Object3D, radius: number, opacity: number, speed: number = 0.03 ) {
+	// @ts-ignore - material doesn't captured via Group
+	if ( point.material.opacity < opacity ) point.material.opacity += speed
+	if ( point.scale.x < radius ) point.scale.x = point.scale.y += speed
 }

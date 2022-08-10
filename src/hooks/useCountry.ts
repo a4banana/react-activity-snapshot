@@ -33,12 +33,12 @@ type CountryGeoCoods = {
     name: string
 }
 
-interface BuyerAndSellerGeoPosition {
+export interface BuyerAndSellerGeoPosition {
     buyer: GeoPosition
     seller: GeoPosition
 }
 
-type BuyerAndSellerGeoPositionCollection = Array<BuyerAndSellerGeoPosition>
+export type BuyerAndSellerGeoPositionCollection = Array<BuyerAndSellerGeoPosition>
 
 export default function useCountry({ globe, geojson }: Props ): UseCountry {
     const { inquiries, selectedInquiries } = useInquiry()
@@ -175,8 +175,7 @@ const _getCountryByCode = ( features: Array<Feature>, iso_a2: string ) => {
 
 const _hasFeatureAndThreeObj = ( feature: Feature, iso_a2: string ): boolean => {
     return ( feature && Object.getOwnPropertyNames( feature ).includes( '__threeObj' )) ? true : false
-	
-    /* dev
+    /* DEV: for catch geojson valid
     if ( feature && Object.getOwnPropertyNames( feature ).includes( '__threeObj' ) ) {
 		return true
 	} else {
@@ -188,8 +187,7 @@ const _hasFeatureAndThreeObj = ( feature: Feature, iso_a2: string ): boolean => 
 
 const _isValidCoord = ( pos: { x: number, y: number, z: number }, iso_a2: string, name: string ): boolean => {
     return ( pos.x !== 0 && pos.y !== 0 && pos.z !== 0 ) ? true : false
-
-    /* dev
+    /* DEV: for catch position valid
 	if ( pos.x !== 0 && pos.y !== 0 && pos.z !== 0 ) {
 		return true
 	} else {

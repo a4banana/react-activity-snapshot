@@ -63,22 +63,3 @@ const calcInquiryDataCount = ( inquiries: InquiryCollection ): InquiryCount => {
 const getUniqLengthOfArray = <T, U = any>( arr: T, filter: ( child: U ) => void ): number => {
 	return [ ...new Set( arr.map( filter )) ].length
 }
-
-/*
-	1. Country 선택시
-		a. 관련 상품 외 disabled
-		b. 선택 국가만 Highlight
-		c. 나머지는 dishighlight
-
-		1-1. 아이템 선택시
-			a. 관련 Path만 Highligbt
-		
-	2. Item 선택시
-		a. 현재 국가 Point 소멸
-		b. 관련 국가만 highlight
-		c. 관련 국가만 label 표기
-		d. 관련 Path 만 표기
-		
-		2-1. 국가 선택시
-			a. 국가 버블 제공
-*/

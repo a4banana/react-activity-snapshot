@@ -40,11 +40,11 @@ export default function ProgressIndicator() {
 
 
     // !!! NEVER CAPTURED 'stroke-dashoffset' in react. not working this code
-    const transitionEndHandler = ( event: ComponentTransitionEvent<SVGCircleElement> ): void => {
-        if ( event.propertyName === 'stroke-dashoffset' ) {
-            dispatchQueues({ type: QueuesActionType.DONE_QUEUE, key: 'progress-indicator' });
-        }
-    }
+    // const transitionEndHandler = ( event: ComponentTransitionEvent<SVGCircleElement> ): void => {
+    //     if ( event.propertyName === 'stroke-dashoffset' ) {
+    //         dispatchQueues({ type: QueuesActionType.DONE_QUEUE, key: 'progress-indicator' });
+    //     }
+    // }
 
     // !!! MUST CHANGED 2 transitionend event
     useEffect(()=> {
@@ -62,7 +62,7 @@ export default function ProgressIndicator() {
             <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius }
                 style={ styles }
                 strokeDasharray={ dashArray }
-                onTransitionEnd={ transitionEndHandler }
+                // onTransitionEnd={ transitionEndHandler }
                 className="thumb"></circle>
         </svg>
     )

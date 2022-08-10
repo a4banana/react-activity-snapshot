@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bezier-easing": "^2.1.0",
     "gsap": "^3.10.4",
     "lodash-es": "^4.17.21",
     "react": "16.13.0",

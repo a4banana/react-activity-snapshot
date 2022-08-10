@@ -48,8 +48,8 @@ function queuesReducer( state: QueuesContext, action: QueuesActions ): QueuesCon
             return { ...state, isAllDone: true }
         }
         case QueuesActionType.ADD_QUEUE: {
-            // console.log( key + ' is added' )
             const { key } = action
+            // console.log( key + ' is added' )
             return {
                 isAllDone: state.isAllDone ? false : state.isAllDone,
                 queues: [ ...state.queues, { key, isDone: false }]
@@ -57,7 +57,7 @@ function queuesReducer( state: QueuesContext, action: QueuesActions ): QueuesCon
         }
         case QueuesActionType.DONE_QUEUE: {
             // console.log( action.key + ' is doned' )
-            if( !hasKey( state.queues, action.key ) ) console.log( 'theres no ' + action.key )
+            // if( !hasKey( state.queues, action.key ) ) console.log( 'theres no ' + action.key )
             return { ...state,
                 queues: state.queues.filter( queue => exceptKey( queue, action.key ))
             }
@@ -93,5 +93,4 @@ export function QueuesProvider({ children }: { children: ReactNode }) {
 }
 
 const hasKey = ( queues: QueueCollection, key: string ): boolean => queues.some( queue => queue.key === key )
-
 const exceptKey = ( queue: Queue, key: string ): boolean => queue.key !== key

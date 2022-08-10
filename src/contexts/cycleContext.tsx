@@ -34,7 +34,6 @@ const initialState: CycleState = {
 function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
     switch ( type ) {
         case CycleActionTypes.PLAY:
-            console.log( 'call play' )
             return { ...state, isPlaying: true }
         case CycleActionTypes.PAUSE:
             return { ...state, isPlaying: false }
@@ -53,15 +52,6 @@ function cycleReducer( state: CycleState, { type }: CycleAction ): CycleState {
 
 export function CycleProvider({ children }: { children: ReactNode }) {
     const [ cycle, dispatch ] = useReducer( cycleReducer, initialState )
-    const { isLoading } = cycle
-
-    useEffect(() => {
-        if ( isLoading ) {
-            console.log( 'now loading' )
-        } else {
-            console.log( 'loading end' )
-        }
-    }, [ isLoading ])
 
     return (
         <CycleContext.Provider value={ cycle }>

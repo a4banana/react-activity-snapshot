@@ -4,9 +4,6 @@ import { polar2Cartesian } from './PolarAndCartesian'
 import chevron from '../assets/chevron.svg'
 
 export default function CountryBubble( scene: Scene ) {
-	const HOST_URI: string = "https://www.tridge.com/sellers/browse"
-	const COUNTRY_URL_PARAM: string = "country_In"
-
 	// init DOM
 	const container: HTMLDivElement = document.createElement( 'div' )
 	container.className = 'container'
@@ -35,18 +32,14 @@ export default function CountryBubble( scene: Scene ) {
 	p.className = 'country-body'
 	container.appendChild( p )
 
-	function drawBubble( country: CountryData ) {
+	function drawBubble( country: CountryData, product?: Product ) {
 		const div = document.createElement( 'div' )
 		div.className = 'country-bubble'
 		div.appendChild( container )
 		title.textContent = country.name
 		p.textContent = `20 inquiries were recieved by suppliers`
-
-		// const productQuery: ComputedRef<string> = computed(() => selectedProduct.value ? `&supplyingProducts_In=${ selectedProduct.value.id }` : '' )
-		const href = `${HOST_URI}?${COUNTRY_URL_PARAM}=${ country.iso_a2 }`
+		const href = hrefWithUrlParam( country.iso_a2, product?.id )
 		link.href = href
-		
-		// div.addEventListener( 'click', ()=> console.log( country.name, country.iso_a2 ))
 		
 		const { lat, lng } = country.position
 		const coords = polar2Cartesian( lat, lng, .01 )
@@ -63,4 +56,13 @@ export default function CountryBubble( scene: Scene ) {
 	return {
 		drawBubble
 	}
+}
+
+const hrefWithUrlParam = ( iso_a2: string, id?: number ): string => {
+	const HOST_URI: string = "https://www.tridge.com/sellers/browse"
+	const COUNTRY_URL_PARAM: string = "country_In"
+	const PRODUCT_URL_PARAM: string = "supplyingProducts_In"
+	const countryParam = `${ COUNTRY_URL_PARAM }=${iso_a2}`
+	const productParam = id ? `${ PRODUCT_URL_PARAM }=${id}` : ''
+	return `${ HOST_URI }?${countryParam}${productParam}`
 }

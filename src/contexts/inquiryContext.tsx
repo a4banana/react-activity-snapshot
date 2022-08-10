@@ -22,7 +22,6 @@ type InquiryAction = InquiryLoad | InquiryDone
 
 type State = {
     data: BuyerInquirySellerForWorldMapList
-    cursorDate: string
     isLoading: boolean
 }
 const initialState: State = {
@@ -31,7 +30,6 @@ const initialState: State = {
         count: 0,
         cursorDate: ''
     },
-    cursorDate: '',
     isLoading: false
 }
 
@@ -41,11 +39,9 @@ export const InquiryDispatchContext = createContext<Dispatch<InquiryAction>>({} 
 function inqReducer( state: State, action: InquiryAction ): State {
     switch( action.type ) {
         case InquiryActionType.LOAD: {
-            // console.log( 'load' )
             return { ...state, isLoading: true }
         }
         case InquiryActionType.DONE: {
-            // console.log( 'done' )
             return { ...state, isLoading: false, data: action.data }
         }
     }
@@ -62,7 +58,7 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
     )
 }
 
-
+//  * cursorDate 마지막 값일경우 null 값으로 넣어서 cycle loop 시켜야함 **
 //  * DUMMY FOR DEV: SHOULD BE REMOVED
 export function getInq() {
     const action = async ( dispatch: Dispatch<InquiryAction>, cursorDate: number ): Promise<void> => {
@@ -72,11 +68,9 @@ export function getInq() {
             const data = await dummyFetch( cursor )
             dispatch({ type: InquiryActionType.DONE, data })
         } catch( err ) {
-            // never happen in dummy
             console.error( err )
         }
     }
-
     return action
 }
 

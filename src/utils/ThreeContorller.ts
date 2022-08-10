@@ -7,10 +7,15 @@ import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
 import type { FeatureCollection } from 'geojson'
 
 import CountryBubble from './DrawBubble'
-import CountryPoint from './DrawCountryPoint'
+import { CountryPoint,
+	blurAllPoints, unBlurAllPoints, hoverPoint,
+	blurPoint, selectPoint,
+	disablePoint, enablePoint } from './DrawCountryPoint'
 import InquiryArc from './DrawInquiryArc'
 import DrawText from './DrawText'
 import { getPixelsPerDegree } from './PolarAndCartesian'
+import type { BuyerAndSellerGeoPositionCollection, BuyerAndSellerGeoPosition } from '../hooks/useCountry'
+import type { SelectBaseString } from '../contexts/selectedContext'
 import gsap from 'gsap'
 
 type Rendereres = Array<WebGLRenderer | CSS3DRenderer>
@@ -19,10 +24,16 @@ interface Callback<T = any, U = void> {
 	( arg?: T ): U
 }
 
-interface BuyerAndSellerGeoPosition {
-    buyer: GeoPosition
-    seller: GeoPosition
+interface DrawSelectedInquiriesArgs {
+	countries: CountryDataCollection
+	inquiries: BuyerAndSellerGeoPositionCollection
+	selectBase: SelectBaseString
+	selectedCountry: CountryData | null
+	dom: HTMLDivElement
+	fn: Callback
 }
+
+type DrawSelectedInquiries = ( args: DrawSelectedInquiriesArgs ) => void
 
 export type ThreeControllerType = {
 	renderers: Rendereres
@@ -31,11 +42,11 @@ export type ThreeControllerType = {
 	globe: ThreeGlobe
 	interactionManager: InteractionManager
 	init: () => void
-	drawInquiryArcs: ( inqs: { buyer: GeoPosition, seller: GeoPosition }[] )=> void
+	drawInquiryArcs: ( inqs: BuyerAndSellerGeoPositionCollection )=> void
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
 	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => void
-	drawSelectedInquiries: ( countries: CountryDataCollection, inqs: any, base: string, dom: HTMLDivElement, fn: Callback, selectedCountry: CountryData ) => void
-	drawCountryBubble: ( country: CountryData ) => void
+	drawSelectedInquiries: DrawSelectedInquiries
+	drawCountryBubble: ( country: CountryData, product?: Product ) => void
 	removeSelectedInquiries: () => void
 	render: ( isPlaying?: boolean ) => void
 }
@@ -45,7 +56,9 @@ const SCREEN_WIDTH: number = 1184
 const SCREEN_HEIGHT: number = 666
 const COUNTRY_POLYGON_COLOR: string = '#3D3D3D'
 const BLUR_ALPHA: number = 0.3
+const COUNTRY_ALPHA: number = 0.6
 const BLUR_RADIUS: number = getPixelsPerDegree( 0.8 )
+const DISABLED_RADIUS: number = getPixelsPerDegree( 0.3 )
 const FOCUS_RADIUS: number = getPixelsPerDegree( 1.2 )
 const CAM_INITIAL_Z: number = 270
 
@@ -99,7 +112,7 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		setCamera( cam, SCREEN_WIDTH, SCREEN_HEIGHT, CAM_INITIAL_Z )
 		// set OrbitControl
 		setOrbitControl( obControl, {
-			autoRotate: false, 
+			autoRotate: true, 
 			autoRotateSpeed: 0.125,
 			minDistance: 200, 
 			maxDistance: 500,
@@ -122,12 +135,12 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 	}
 
 	const drawCountryPoints = ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => {
-		removeChildFromGroup( pointGroup )
+		removeChildsFromGroup( pointGroup, interactionManager )
 		countries.forEach(( country: CountryData ) => pointGroup.add( drawCountryPoint( country, dom, fn )))
 	}
 
 	const drawInquiryArcs = ( inqs: { buyer: GeoPosition, seller: GeoPosition }[]) => {
-		removeChildFromGroup( lineGroup )
+		removeChildsFromGroup( lineGroup )
 		inqs.forEach(({ buyer, seller }) => lineGroup.add( drawInquiryArc( buyer, seller )))
 	}
 	
@@ -137,18 +150,10 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		return new Promise( resolve => setTimeout( resolve, 1))
 	}
 	
-	const drawSelectedInquiries = (
-		countries: CountryDataCollection,
-		inqs: BuyerAndSellerGeoPosition[],
-		base: string,
-		dom: HTMLDivElement,
-		fn: Callback,
-		selectedCountry: CountryData
-	): void => {
-		
-		// initBeforeDrawSelected()
-
-		switch ( base ) {
+	const drawSelectedInquiries = ({
+		countries, inquiries, selectBase, selectedCountry, dom, fn
+	}: DrawSelectedInquiriesArgs): void => {
+		switch ( selectBase ) {
 			case 'country':
 				dc()
 				break;
@@ -159,69 +164,71 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 
 		function dc() {
 			// unused
-			removeChildFromGroup( textGroup )
-			removeChildFromGroup( focusedLineGroup )
-			removeChildFromGroup( focusedPointGroup )
-			textGroup.visible = false
-			focusedPointGroup.visible = false
+			removeChildsFromGroup( textGroup )
+			removeChildsFromGroup( focusedLineGroup )
+			removeChildsFromGroup( focusedPointGroup )
+			// focusedPointGroup.visible = false
+			focusedLineGroup.visible = true
 			lineGroup.visible = false
-			pointGroup.visible = true
+			textGroup.visible = false
 
-			// init
-			focusedLineGroup.children = []
-			
 			pointGroup.children.forEach( point => {
-				point.userData.selected = ( point.userData.iso_a2 === selectedCountry.iso_a2 ) ? true : false
+				point.userData.selected = ( point.userData.iso_a2 === selectedCountry!.iso_a2 ) ? true : false
 			})
 
-			inqs.forEach(({ buyer, seller }) => {
-				const line = drawInquiryArc( buyer, seller )
-				// @ts-ignore
-				gsap.to( line.material.uniforms.dashTranslate, { value: 1, duration: 2, ease: "Power3.out"})
-				focusedLineGroup.add( line )
-			})
+			drawSelectedArcs( inquiries, focusedLineGroup )
 		}
 
 		function dp() {
-			removeChildFromGroup( textGroup )
-			removeChildFromGroup( focusedLineGroup )
-			removeChildFromGroup( focusedPointGroup )
+			removeChildsFromGroup( textGroup )
+			removeChildsFromGroup( focusedLineGroup )
+			removeChildsFromGroup( focusedPointGroup )
 			pointGroup.children.forEach( point => point.userData.selected = false )
 			lineGroup.visible = false
-			pointGroup.visible = false
-			focusedPointGroup.visible = true
+			focusedLineGroup.visible = true
 			textGroup.visible = true
 
+			// console.log( countries )
+			const hasKey = ( iso_a2: string ): boolean => {
+				return countries.some( country => country.iso_a2 === iso_a2 )
+			};
+
+			pointGroup.children.forEach( point => {
+				point.userData.disabled = !hasKey( point.userData.iso_a2 )
+			})
+
 			countries.forEach(( country: CountryData ) => {
-				focusedPointGroup.add( drawCountryPoint( country, dom, fn ))
+			// 	focusedPointGroup.add( drawCountryPoint( country, dom, fn ))
 				const textMesh: Mesh | undefined = drawTextByCountryName( country )
 				if ( textMesh ) textGroup.add( textMesh )
 			})
 
 			moveToCamera( countries[Math.floor( Math.random() * countries.length )] )
-
-			inqs.forEach(({ buyer, seller }) => {
-				const line = drawInquiryArc( buyer, seller )
-				// @ts-ignore
-				gsap.to( line.material.uniforms.dashTranslate, { value: 1, duration: 2, ease: "Power3.out"})
-				focusedLineGroup.add( line )
-			})
+			drawSelectedArcs( inquiries, focusedLineGroup )
 		}
 	}
 
-	const removeSelectedInquiries = () => {
-		removeChildFromGroup( textGroup )
-		removeChildFromGroup( focusedLineGroup )
-		removeChildFromGroup( focusedPointGroup )
-		removeChildFromGroup( htmlGroup )
+	const removeSelectedInquiries = (): void => {
+		removeChildsFromGroup( textGroup )
+		removeChildsFromGroup( focusedLineGroup )
+		removeChildsFromGroup( focusedPointGroup )
+		removeChildsFromGroup( htmlGroup )
+		focusedLineGroup.visible = false
+		focusedPointGroup.visible = false
 		pointGroup.visible = true
 		lineGroup.visible = true
-		pointGroup.children.forEach( point => point.userData.selected = false )
+
+		pointGroup.children.forEach( point => {
+			point.userData.selected = false
+			point.userData.disabled = false
+			point.userData.blur = false
+			point.userData.hover = false
+		})
 	}
 
-	const drawCountryBubble = ( country: CountryData ): void => {
-		removeChildFromGroup( htmlGroup )
-		htmlGroup.add( drawBubble( country ) )
+	const drawCountryBubble = ( country: CountryData, product?: Product ): void => {
+		removeChildsFromGroup( htmlGroup )
+		htmlGroup.add( drawBubble( country, product ? product : undefined ) )
 	}
 	
 	return {
@@ -230,8 +237,20 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 	}
 }
 
-const removeChildFromGroup = ( group: Group ) => {
-	group.children.forEach( child => group.remove( child ))
+const drawSelectedArcs = ( inquiries: BuyerAndSellerGeoPositionCollection, group: Group ) => {
+	inquiries.forEach(({ buyer, seller }) => {
+		const line = drawInquiryArc( buyer, seller )
+		// @ts-ignore
+		gsap.to( line.material.uniforms.dashTranslate, { value: 1, duration: 2, ease: "Power3.out"})
+		group.add( line )
+	})
+}
+
+const removeChildsFromGroup = ( group: Group, im?: InteractionManager ) => {
+	group.children.forEach( child => {
+		group.remove( child )
+		if ( im ) im.remove( child )
+	})
 	group.children = []
 }
 
@@ -270,23 +289,13 @@ function updatePath( lineGroup: Group ): void {
 }
 
 function updatePoint( pointGroup: Group ): void {
-	if ( pointGroup.children.some( point => point.userData.selected === true ) ) {
-		pointGroup.children.forEach( point => {
-			if ( !point.userData.selected ) {
-				if ( point.userData.hover ) {
-					// @ts-ignore - material doesn't captured via Group
-					point.material!.opacity = .8
-					point.scale.x = point.scale.y = FOCUS_RADIUS
-				} else {
-					// @ts-ignore - material doesn't captured via Group
-					if ( point.material.opacity > BLUR_ALPHA ) point.material!.opacity -= 0.03
-					if ( point.scale.x > BLUR_RADIUS ) point.scale.x = point.scale.y -= 0.03
-				}
-			} else {
-				// @ts-ignore - material doesn't captured via Group
-				if ( point.material!.opacity < 1 ) point.material!.opacity += 0.03
-				if ( point.scale.x < FOCUS_RADIUS ) point.scale.x = point.scale.y += 0.03
-			}
-		})
-	}
+	pointGroup.children.forEach( point => {
+		if ( !point.userData.selected ) {
+			( point.userData.disabled ) ? disablePoint( point, DISABLED_RADIUS, BLUR_ALPHA ) : enablePoint( point, BLUR_RADIUS, COUNTRY_ALPHA );
+			( point.userData.hover ) ? hoverPoint( point, FOCUS_RADIUS ) : blurPoint( point, BLUR_ALPHA, BLUR_RADIUS );
+		} else {
+			selectPoint( point, FOCUS_RADIUS );	
+		}
+	})
 }
+

@@ -22,7 +22,7 @@ export default function App() {
 	const getInquiry = getInq();
 
 	// dev
-	useEffect(() => console.log( 'app init' ), [])
+	// useEffect(() => console.log( 'app init' ), [])
 
 	useEffect(() => {
 		if ( isLoading ) {

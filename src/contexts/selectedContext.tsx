@@ -12,7 +12,7 @@ export enum SelectedActionTypes {
     DESELECT_PRODUCT
 }
 
-type SelectBaseString = 'product' | 'country' | null;
+export type SelectBaseString = 'product' | 'country' | null;
 
 export interface SelectState {
     selectedCountry: CountryData | null
