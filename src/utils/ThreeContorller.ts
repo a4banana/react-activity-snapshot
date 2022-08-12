@@ -1,5 +1,5 @@
 import { Scene, WebGLRenderer, PerspectiveCamera,
-	AmbientLight, DirectionalLight, Group, Mesh } from 'three'
+	AmbientLight, DirectionalLight, Group, Mesh, Object3D } from 'three'
 import ThreeGlobe from 'three-globe'
 import { InteractionManager } from 'three.interactive'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -7,15 +7,13 @@ import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
 import type { FeatureCollection } from 'geojson'
 
 import CountryBubble from './DrawBubble'
-import { CountryPoint,
-	blurAllPoints, unBlurAllPoints, hoverPoint,
-	blurPoint, selectPoint,
+import { CountryPoint, PointData,
+	hoverPoint, selectPoint,
 	disablePoint, enablePoint } from './DrawCountryPoint'
 import InquiryArc from './DrawInquiryArc'
 import DrawText from './DrawText'
 import { getPixelsPerDegree } from './PolarAndCartesian'
-import type { BuyerAndSellerGeoPositionCollection, BuyerAndSellerGeoPosition } from '../hooks/useCountry'
-import type { SelectBaseString } from '../contexts/selectedContext'
+import type { BuyerAndSellerGeoPositionCollection } from '../hooks/useCountry'
 import gsap from 'gsap'
 
 type Rendereres = Array<WebGLRenderer | CSS3DRenderer>
@@ -24,13 +22,30 @@ interface Callback<T = any, U = void> {
 	( arg?: T ): U
 }
 
-interface DrawSelectedInquiriesArgs {
-	countries: CountryDataCollection
-	inquiries: BuyerAndSellerGeoPositionCollection
-	selectBase: SelectBaseString
-	selectedCountry: CountryData | null
-	dom: HTMLDivElement
-	fn: Callback
+
+export enum DrawActionTypes {
+	DRAW_BY_COUNTRY,
+	DRAW_BY_PRODUCT
+}
+
+interface DrawActionByCountry {
+	type: DrawActionTypes.DRAW_BY_COUNTRY
+	selectedCountry: CountryData
+	selectedProduct?: Product | null
+}
+
+interface DrawActionByProduct {
+	type: DrawActionTypes.DRAW_BY_PRODUCT
+	selectedCountry?: CountryData | null
+	selectedProduct: Product
+}
+
+export type DrawActions = DrawActionByCountry | DrawActionByProduct
+
+type DrawSelectedInquiriesArgs = {
+	countries: CountryDataCollection,
+	inquiries: BuyerAndSellerGeoPositionCollection,
+	action: DrawActions
 }
 
 type DrawSelectedInquiries = ( args: DrawSelectedInquiriesArgs ) => void
@@ -46,7 +61,7 @@ export type ThreeControllerType = {
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
 	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => void
 	drawSelectedInquiries: DrawSelectedInquiries
-	drawCountryBubble: ( country: CountryData, product?: Product ) => void
+	drawCountryBubble: ( count: number, country: CountryData, product?: Product ) => void
 	removeSelectedInquiries: () => void
 	render: ( isPlaying?: boolean ) => void
 }
@@ -151,89 +166,59 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 	}
 	
 	const drawSelectedInquiries = ({
-		countries, inquiries, selectBase, selectedCountry, dom, fn
-	}: DrawSelectedInquiriesArgs): void => {
-		switch ( selectBase ) {
-			case 'country':
-				dc()
-				break;
-			case 'product':
-				dp()
-				break;
+		countries, inquiries, action
+	}: DrawSelectedInquiriesArgs ): void => {
+
+		textGroup.clear()
+		focusedLineGroup.clear()
+		focusedPointGroup.clear()
+		lineGroup.visible = false
+		focusedLineGroup.visible = true
+
+		pointGroup.children.forEach( child => initPointGroup( child, action ))
+
+		if ( action.type === DrawActionTypes.DRAW_BY_PRODUCT ) {
+			pointGroup.children.forEach( child => deselectBlurredCountries( child, countries ) )
+			renderCountryLabels( countries, textGroup )
+			moveCameraFocus( countries, action )
 		}
 
-		function dc() {
-			// unused
-			removeChildsFromGroup( textGroup )
-			removeChildsFromGroup( focusedLineGroup )
-			removeChildsFromGroup( focusedPointGroup )
-			// focusedPointGroup.visible = false
-			focusedLineGroup.visible = true
-			lineGroup.visible = false
-			textGroup.visible = false
-
-			pointGroup.children.forEach( point => {
-				point.userData.selected = ( point.userData.iso_a2 === selectedCountry!.iso_a2 ) ? true : false
-			})
-
-			drawSelectedArcs( inquiries, focusedLineGroup )
-		}
-
-		function dp() {
-			removeChildsFromGroup( textGroup )
-			removeChildsFromGroup( focusedLineGroup )
-			removeChildsFromGroup( focusedPointGroup )
-			pointGroup.children.forEach( point => point.userData.selected = false )
-			lineGroup.visible = false
-			focusedLineGroup.visible = true
-			textGroup.visible = true
-
-			// console.log( countries )
-			const hasKey = ( iso_a2: string ): boolean => {
-				return countries.some( country => country.iso_a2 === iso_a2 )
-			};
-
-			pointGroup.children.forEach( point => {
-				point.userData.disabled = !hasKey( point.userData.iso_a2 )
-			})
-
-			countries.forEach(( country: CountryData ) => {
-			// 	focusedPointGroup.add( drawCountryPoint( country, dom, fn ))
-				const textMesh: Mesh | undefined = drawTextByCountryName( country )
-				if ( textMesh ) textGroup.add( textMesh )
-			})
-
-			moveToCamera( countries[Math.floor( Math.random() * countries.length )] )
-			drawSelectedArcs( inquiries, focusedLineGroup )
-		}
+		drawSelectedArcs( inquiries, focusedLineGroup )
 	}
 
 	const removeSelectedInquiries = (): void => {
-		removeChildsFromGroup( textGroup )
-		removeChildsFromGroup( focusedLineGroup )
-		removeChildsFromGroup( focusedPointGroup )
-		removeChildsFromGroup( htmlGroup )
+		console.log( 'reset!' )
+		textGroup.clear()
+		focusedLineGroup.clear()
+		focusedPointGroup.clear()
+		htmlGroup.clear()
 		focusedLineGroup.visible = false
 		focusedPointGroup.visible = false
 		pointGroup.visible = true
 		lineGroup.visible = true
 
 		pointGroup.children.forEach( point => {
-			point.userData.selected = false
-			point.userData.disabled = false
-			point.userData.blur = false
-			point.userData.hover = false
+			point.userData = reInitPoint( point.userData as PointData )
 		})
 	}
 
-	const drawCountryBubble = ( country: CountryData, product?: Product ): void => {
-		removeChildsFromGroup( htmlGroup )
-		htmlGroup.add( drawBubble( country, product ? product : undefined ) )
+	const drawCountryBubble = ( count: number, country: CountryData, product?: Product ): void => {
+		htmlGroup.clear()
+		htmlGroup.add( drawBubble( count, country, product ? product : undefined ) )
 	}
 	
 	return {
 		renderers, scene, cam, globe, interactionManager,
 		init, drawCountryPolygon, drawCountryPoints, drawInquiryArcs, render, drawSelectedInquiries, drawCountryBubble, removeSelectedInquiries
+	}
+}
+
+const reInitPoint = ( userData: PointData ): PointData => { return {
+		...userData,
+		selected: false,
+		disabled: false,
+		blur: false,
+		hover: false
 	}
 }
 
@@ -249,7 +234,7 @@ const drawSelectedArcs = ( inquiries: BuyerAndSellerGeoPositionCollection, group
 const removeChildsFromGroup = ( group: Group, im?: InteractionManager ) => {
 	group.children.forEach( child => {
 		group.remove( child )
-		if ( im ) im.remove( child )
+		im?.remove( child )
 	})
 	group.children = []
 }
@@ -291,11 +276,49 @@ function updatePath( lineGroup: Group ): void {
 function updatePoint( pointGroup: Group ): void {
 	pointGroup.children.forEach( point => {
 		if ( !point.userData.selected ) {
-			( point.userData.disabled ) ? disablePoint( point, DISABLED_RADIUS, BLUR_ALPHA ) : enablePoint( point, BLUR_RADIUS, COUNTRY_ALPHA );
-			( point.userData.hover ) ? hoverPoint( point, FOCUS_RADIUS ) : blurPoint( point, BLUR_ALPHA, BLUR_RADIUS );
+			if ( point.userData.disabled ) {
+				disablePoint( point, DISABLED_RADIUS, BLUR_ALPHA )
+			} else {
+				if ( point.userData.hover ) {
+					hoverPoint( point, FOCUS_RADIUS )
+				} else {
+					enablePoint( point, BLUR_RADIUS, COUNTRY_ALPHA )
+				}
+			}
 		} else {
 			selectPoint( point, FOCUS_RADIUS );	
 		}
 	})
 }
 
+function renderCountryLabels( countries: CountryDataCollection, group: Group ) {
+	countries.forEach(( country: CountryData ) => {
+		const textMesh: Mesh | undefined = drawTextByCountryName( country )
+		if ( textMesh ) group.add( textMesh )
+	})
+}
+
+function moveCameraFocus( countries: CountryDataCollection, action: DrawActionByProduct ) {
+	if ( !( action.selectedProduct && action.selectedCountry ))
+		moveToCamera( countries[Math.floor( Math.random() * countries.length )] )
+}
+
+function hasKeyInCountries( countries: CountryDataCollection, iso_a2: string ): boolean {
+	return countries.some( country => country.iso_a2 === iso_a2 )
+}
+
+function deselectBlurredCountries( child: Object3D, countries: CountryDataCollection ): void {
+	child.userData.disabled = !hasKeyInCountries( countries, child.userData.iso_a2 )
+}
+
+
+function initPointGroup( child: Object3D, action: DrawActions ): void {
+	switch ( action.type ) {
+		case DrawActionTypes.DRAW_BY_COUNTRY:
+			child.userData.selected = action.selectedCountry.iso_a2 === child.userData.iso_a2 ? true : false
+			break;
+		case DrawActionTypes.DRAW_BY_PRODUCT:
+			child.userData.selected = false
+			break;
+	}
+}

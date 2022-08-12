@@ -127,6 +127,17 @@ export function disablePoint( point: Object3D, radius: number, opacity: number, 
 
 export function enablePoint( point: Object3D, radius: number, opacity: number, speed: number = 0.03 ) {
 	// @ts-ignore - material doesn't captured via Group
-	if ( point.material.opacity < opacity ) point.material.opacity += speed
-	if ( point.scale.x < radius ) point.scale.x = point.scale.y += speed
+	if ( point.material.opacity < opacity ) {
+		// @ts-ignore - material doesn't captured via Group
+		point.material.opacity += speed
+		// @ts-ignore - material doesn't captured via Group
+	} else if ( point.material.opacity >= opacity ) {
+		// @ts-ignore - material doesn't captured via Group
+		point.material.opacity -= speed
+	}
+	if ( point.scale.x < radius ) {
+		point.scale.x = point.scale.y += speed
+	} else if ( point.scale.x > radius ) {
+		point.scale.x = point.scale.y -= speed
+	}
 }

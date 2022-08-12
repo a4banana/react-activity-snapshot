@@ -1,4 +1,4 @@
-import { ThreeControllerType } from "../../utils/ThreeContorller"
+import { ThreeControllerType, DrawActionTypes, DrawActions } from "../../utils/ThreeContorller"
 import useCountry from '../../hooks/useCountry'
 import { useEffect, useContext } from "react"
 import { Feature } from "geojson"
@@ -21,6 +21,7 @@ const GlobeCountry = ({ threeController, geojson, canvasDom }: Props ) => {
     const { countries, buyerAndSellerGeoPositions, countriesByProduct,
         buyerAndSellerGeoPositionsByProduct,
         toggleCountry } = useCountry({ globe, geojson })
+    
     const previousCountriesByProduct = usePrevious( countriesByProduct )
     const previousBuyerAndSellerGeoPositions = usePrevious( buyerAndSellerGeoPositionsByProduct.current )
     
@@ -36,20 +37,22 @@ const GlobeCountry = ({ threeController, geojson, canvasDom }: Props ) => {
             drawSelectedInquiries({
                 countries: countriesByProduct,
                 inquiries: buyerAndSellerGeoPositionsByProduct.current,
-                selectBase,
-                selectedCountry,
-                dom: canvasDom,
-                fn: toggleCountry
+                action: {
+                    type: selectBase == 'product' ? DrawActionTypes.DRAW_BY_PRODUCT : DrawActionTypes.DRAW_BY_COUNTRY,
+                    selectedCountry,
+                    selectedProduct
+                } as DrawActions
             })
         } else {
-            if (( previousCountriesByProduct && previousBuyerAndSellerGeoPositions ) && ( previousCountriesByProduct.length || previousBuyerAndSellerGeoPositions.length ) )
+            if (( previousCountriesByProduct && previousBuyerAndSellerGeoPositions ) && ( previousCountriesByProduct.length || previousBuyerAndSellerGeoPositions.length ))
                 removeSelectedInquiries()
         }
     }, [ countriesByProduct, buyerAndSellerGeoPositionsByProduct ])
 
     useEffect(() => {
         if ( selectedCountry ) {
-            ( selectedProduct ) ? drawCountryBubble( selectedCountry, selectedProduct ) : drawCountryBubble( selectedCountry );
+            const inquiryCount = buyerAndSellerGeoPositionsByProduct.current.length;
+            ( selectedProduct ) ? drawCountryBubble( inquiryCount, selectedCountry, selectedProduct ) : drawCountryBubble( inquiryCount, selectedCountry );
         }
     }, [ selectedCountry, selectedProduct ])
 

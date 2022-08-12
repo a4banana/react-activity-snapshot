@@ -32,12 +32,12 @@ export default function CountryBubble( scene: Scene ) {
 	p.className = 'country-body'
 	container.appendChild( p )
 
-	function drawBubble( country: CountryData, product?: Product ) {
+	function drawBubble( count: number, country: CountryData, product?: Product ) {
 		const div = document.createElement( 'div' )
 		div.className = 'country-bubble'
 		div.appendChild( container )
 		title.textContent = country.name
-		p.textContent = `20 inquiries were recieved by suppliers`
+		p.textContent = bodyText( count )
 		const href = hrefWithUrlParam( country.iso_a2, product?.id )
 		link.href = href
 		
@@ -65,4 +65,8 @@ const hrefWithUrlParam = ( iso_a2: string, id?: number ): string => {
 	const countryParam = `${ COUNTRY_URL_PARAM }=${iso_a2}`
 	const productParam = id ? `${ PRODUCT_URL_PARAM }=${id}` : ''
 	return `${ HOST_URI }?${countryParam}${productParam}`
+}
+
+const bodyText = ( count: number ): string => {
+	return ( count > 1 ) ? `${count} inquiries were recieved by suppliers` : 'A inquiry was recieved by a supplier'
 }

@@ -32,7 +32,6 @@ interface ActionWithPayload {
 interface ActionWithoutPayload {
     type: QueuesActionType.ALL_DONE
 }
-
 type QueuesActions = ActionWithPayload | ActionWithoutPayload
 
 const initialState: QueuesContext = {
@@ -48,11 +47,10 @@ function queuesReducer( state: QueuesContext, action: QueuesActions ): QueuesCon
             return { ...state, isAllDone: true }
         }
         case QueuesActionType.ADD_QUEUE: {
-            const { key } = action
             // console.log( key + ' is added' )
             return {
                 isAllDone: state.isAllDone ? false : state.isAllDone,
-                queues: [ ...state.queues, { key, isDone: false }]
+                queues: [ ...state.queues, { key: action.key, isDone: false }]
             }
         }
         case QueuesActionType.DONE_QUEUE: {

@@ -1,13 +1,15 @@
 import './ProductCard.sass'
 import selectedIcon from '../../assets/checked.svg'
 import { MouseEvent, useState } from 'react'
+import styled, { keyframes } from 'styled-components'
 
 interface Props {
     product: IProduct
+    index: number
     clickHandler: ( event: MouseEvent<HTMLLIElement>, id: number ) => void
 }
 
-export default function ProductCard({ product: { id, image, name, count, selected, disabled }, clickHandler }: Props ) {
+export default function ProductCard({ product: { id, image, name, count, selected, disabled }, index, clickHandler }: Props ) {
     const [ isPressing, setIsPressing ] = useState( false )
     const [ isBlank, setIsBlank ] = useState( false )
     const desc: string = ( count > 1 )
@@ -21,7 +23,7 @@ export default function ProductCard({ product: { id, image, name, count, selecte
         disabled && 'is-disabled',
         isBlank && 'blank-card'
     ].join( ' ' )
-    
+
     function cardClickHandler( event: MouseEvent<HTMLLIElement> ): void {
         if ( !disabled ) clickHandler( event, id )
     }
@@ -35,7 +37,7 @@ export default function ProductCard({ product: { id, image, name, count, selecte
     }
 
     return (
-        <li className="product-card"
+        <Container index={ index } className="product-card"
             onClick={ cardClickHandler }
             onMouseDown={ cardPressing }
             onMouseUp={ cardRelease }
@@ -54,6 +56,21 @@ export default function ProductCard({ product: { id, image, name, count, selecte
                     </div>
                 </div>
             </div>
-        </li>
+        </Container>
     )
 }
+
+const appearing = keyframes`
+    from {
+        transform: translateY( 100% );
+        opacity: 0;
+    }
+    to {
+        transfrom: translateY( 0 );
+        opacity: 1;
+    }
+`
+
+const Container = styled.li<{ index: number }>`
+    animation: ${ appearing } .66s cubic-bezier(0.250, 0.460, 0.450, 0.940) ${ props => props.index * .04 }s;
+`

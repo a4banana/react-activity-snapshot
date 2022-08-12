@@ -15,7 +15,9 @@ export default function ProductCardList() {
 
     useEffect(() => putData( data.inquiries ), [ data.inquiries ])
 
-    const productCards = products.map( prod => <ProductCard key={ prod.id } product={ prod } clickHandler={ clickHandler } /> )
+    const productCards = products.map(( prod,  i ) => {
+        if ( i < 8 ) return <ProductCard key={ prod.id + i } product={ prod } index={ i } clickHandler={ clickHandler } />
+    })
 
     return (
         <ul className="product-card-list">
@@ -23,3 +25,4 @@ export default function ProductCardList() {
         </ul>
     )
 }
+
