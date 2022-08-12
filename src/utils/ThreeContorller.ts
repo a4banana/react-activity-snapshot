@@ -187,7 +187,6 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 	}
 
 	const removeSelectedInquiries = (): void => {
-		console.log( 'reset!' )
 		textGroup.clear()
 		focusedLineGroup.clear()
 		focusedPointGroup.clear()
