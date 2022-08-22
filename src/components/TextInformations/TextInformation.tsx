@@ -9,7 +9,7 @@ import usePrevious from '../../hooks/usePrevious'
 export default function TextInformation() {
     const { counts } = useInquiry()
     const { isAllDone } = useContext( QueuesContext )
-    const prev = usePrevious( isAllDone )
+    const prev = usePrevious<boolean>( isAllDone )
     const countsRef: MutableRefObject<InquiryCount> = useRef({
         inquiries: 0,
         sellers: 0,

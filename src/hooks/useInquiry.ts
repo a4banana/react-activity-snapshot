@@ -54,12 +54,12 @@ const hasProduct = ({ product }: Inquiry, { id }: IProduct ): boolean => product
 const calcInquiryDataCount = ( inquiries: InquiryCollection ): InquiryCount => {
 	return {
 		inquiries: inquiries.length,
-		sellers: getUniqLengthOfArray<InquiryCollection, Inquiry>( inquiries, c => c.sellerCountry ),
-		buyers: getUniqLengthOfArray<InquiryCollection, Inquiry>( inquiries, c => c.buyerCountry ),
-		products: getUniqLengthOfArray<InquiryCollection, Inquiry>( inquiries, c => c.product.name )
+		sellers: getUniqLengthOfArray<Inquiry>( inquiries, c => c.sellerCountry ),
+		buyers: getUniqLengthOfArray<Inquiry>( inquiries, c => c.buyerCountry ),
+		products: getUniqLengthOfArray<Inquiry>( inquiries, c => c.product.name )
 	}
 }
 
-const getUniqLengthOfArray = <T, U = any>( arr: T, filter: ( child: U ) => void ): number => {
+const getUniqLengthOfArray = <T>( arr: T[], filter: ( child: T ) => void ): number => {
 	return [ ...new Set( arr.map( filter )) ].length
 }

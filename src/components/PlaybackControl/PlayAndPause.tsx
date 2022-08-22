@@ -20,7 +20,7 @@ export default function PlayAndPause({ isLoaded }: PlayAndPauseProps) {
         ].join( ' ' )
     }
 
-    function clickHandler() {
+    function clickHandler(): void {
         dispatch({ type: CycleActionTypes.TOGGLE_PLAY })
     }
 
