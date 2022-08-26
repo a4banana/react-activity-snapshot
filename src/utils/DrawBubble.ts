@@ -68,5 +68,5 @@ const hrefWithUrlParam = ( iso_a2: string, id?: number ): string => {
 }
 
 const bodyText = ( count: number ): string => {
-	return ( count > 1 ) ? `${count} inquiries were recieved by suppliers` : 'A inquiry was recieved by a supplier'
+	return ( count > 1 ) ? `${count} inquiries were recived by suppliers` : 'A inquiry was recived by a supplier'
 }
