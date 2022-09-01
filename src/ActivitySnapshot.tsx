@@ -1,9 +1,9 @@
 import './ActivitySnapshot.sass'
 import type { FeatureCollection } from 'geojson'
 
-import { CycleActionTypes, CycleContext, CycleDispatchContext } from './contexts/cycleContext'
+import { CycleContext } from './contexts/cycleContext'
 import { QueuesActionType, QueuesDispatchContext } from './contexts/queuesContext'
-import { InquiryActionType, InquiryDispatchContext, getInq, InquiryContext } from './contexts/inquiryContext'
+import { InquiryDispatchContext, getInq } from './contexts/inquiryContext'
 
 import useFetch from './hooks/useFetch'
 import TridgeGlobe from './components/Globe/TridgeGlobe'
@@ -13,16 +13,18 @@ import TextInformation from './components/TextInformations/TextInformation'
 
 import { useContext, useEffect } from 'react' // dev
 
-export default function App() {
+interface Props {
+	isMobile: boolean
+}
+
+export default function App({ isMobile = true }: Props) {
 	const GEO_JSON_URI: string = './custom.geojson'
     const { data: geojson } = useFetch<FeatureCollection>( GEO_JSON_URI )
 	const { isLoading, cycle } = useContext( CycleContext )
 	const dispatchInquiry = useContext( InquiryDispatchContext )
 	const dispatchQueues = useContext( QueuesDispatchContext )
 	const getInquiry = getInq();
-
-	// dev
-	// useEffect(() => console.log( 'app init' ), [])
+	const classes = isMobile ? 'is-mobile' : ''
 
 	useEffect(() => {
 		if ( isLoading ) {
@@ -36,12 +38,12 @@ export default function App() {
 
 
 	return (
-		<div id="activity-snapshot">
+		<div id="activity-snapshot" className={ classes }>
 			<h1 className='service-title'>Activity Snapshot</h1>
-			<TextInformation />
-			<PlaybackControl isLoaded={ true } />
+			<TextInformation isMobile={ isMobile } />
+			{ !isMobile && <PlaybackControl isLoaded={ true } /> }
 			{ geojson && <TridgeGlobe geojson={ geojson } /> }
-			<ProductCardList />
+			{ !isMobile && <ProductCardList /> }
 		</div>
 	)
 }

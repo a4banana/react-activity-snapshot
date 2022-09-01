@@ -2,7 +2,7 @@
 
 html, body
 	margin: 0
-	background-color: rgba( 0, 0, 0, 1 )
+	background-color: #FFF
 
 #activity-snapshot
 	font-family: Inter, sans-serif
@@ -20,6 +20,23 @@ html, body
 	background-color: rgba( 0, 0, 0, 1 )
 	color: rgba( 255, 255, 255, 1 )
 
+	&.is-mobile
+		width: 100%
+		height: auto
+		aspect-ratio: 1 / 1.4
+	
+		.service-title
+			margin: 1.5rem 0 0 1.5rem
+			
+
+@supports not( aspect-ratio: 1 / 1.4 )
+	#activity-snapshot
+		&.is-mobile
+			padding-top: 155.5%
+			height: 0
+			position: relative
+			overflow: hidden
+
 .service-title
 	color: rgb( 99, 115, 129 )
 	display: block
@@ -32,3 +49,5 @@ html, body
 	position: relative
 	z-index: 2
 	margin: 3rem 0 0 3rem
+	position: absolute
+	top: 0px

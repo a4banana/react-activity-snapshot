@@ -56,7 +56,7 @@ export type ThreeControllerType = {
 	cam: PerspectiveCamera
 	globe: ThreeGlobe
 	interactionManager: InteractionManager
-	init: () => void
+	init: ( prop: InitProp ) => void
 	drawInquiryArcs: ( inqs: BuyerAndSellerGeoPositionCollection )=> void
 	drawCountryPolygon: ( geojson: FeatureCollection ) => void
 	drawCountryPoints: ( countries: CountryDataCollection, dom: HTMLDivElement, fn: Callback ) => void
@@ -66,16 +66,19 @@ export type ThreeControllerType = {
 	render: ( isPlaying?: boolean ) => void
 }
 
+interface InitProp {
+	width: number
+	height: number
+}
+
 const LIGHT_COLOR: number = 0xFFFFFF
-const SCREEN_WIDTH: number = 1184
-const SCREEN_HEIGHT: number = 666
 const COUNTRY_POLYGON_COLOR: string = '#3D3D3D'
 const BLUR_ALPHA: number = 0.3
 const COUNTRY_ALPHA: number = 0.6
 const BLUR_RADIUS: number = getPixelsPerDegree( 0.8 )
 const DISABLED_RADIUS: number = getPixelsPerDegree( 0.3 )
 const FOCUS_RADIUS: number = getPixelsPerDegree( 1.2 )
-const CAM_INITIAL_Z: number = 270
+const CAM_INITIAL_Z: number = 400
 
 const webGLRenderer = new WebGLRenderer({ antialias: true, alpha: true })
 const css3DRenderer = new CSS3DRenderer()
@@ -100,6 +103,7 @@ const textGroup: Group = new Group()
 const focusedLineGroup: Group = new Group()
 const focusedPointGroup: Group = new Group()
 const htmlGroup: Group = new Group()
+const PIXEL_RATIO = window.devicePixelRatio
 
 export default function ThreeController( geojson: FeatureCollection ): ThreeControllerType {
 	function render( isPlaying?: boolean ): void {
@@ -116,7 +120,7 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		updatePoint( pointGroup )
 	}
 
-	async function init(): Promise<void> {
+	async function init({ width, height }: InitProp): Promise<void> {
 		await drawCountryPolygon( geojson )
 
 		scene.add( globe )
@@ -124,7 +128,7 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		scene.add( new DirectionalLight( LIGHT_COLOR, .5 ))
 		
 		// set Camera
-		setCamera( cam, SCREEN_WIDTH, SCREEN_HEIGHT, CAM_INITIAL_Z )
+		setCamera( cam, width, height, CAM_INITIAL_Z )
 		// set OrbitControl
 		setOrbitControl( obControl, {
 			autoRotate: true, 
@@ -141,8 +145,9 @@ export default function ThreeController( geojson: FeatureCollection ): ThreeCont
 		scene.add( pointGroup )
 		scene.add( lineGroup )
 		scene.add( htmlGroup )
-
-		setRenderersSize( renderers, SCREEN_WIDTH, SCREEN_HEIGHT )
+		
+		webGLRenderer.setPixelRatio( PIXEL_RATIO )
+		setRenderersSize( renderers, width, height )
 		initCSS3DRenderer( css3DRenderer )
 		
 		// render first frame for globe
@@ -257,7 +262,7 @@ const setOrbitControl = ( ob: OrbitControls, opts: {[ key: string ]: unknown } )
 }
 
 const setRenderersSize = ( renderes: Rendereres, width: number, height: number ): void => {
-	renderes.forEach( renderer => renderer.setSize( width, height ))
+	renderers.forEach( renderer => renderer.setSize( width, height ))
 }
 
 const initCSS3DRenderer = ( css3DRenderer: CSS3DRenderer ): void => {

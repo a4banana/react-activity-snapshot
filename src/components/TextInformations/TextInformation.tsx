@@ -6,10 +6,18 @@ import { useEffect, useContext, useRef, MutableRefObject } from 'react'
 import { QueuesContext } from '../../contexts/queuesContext'
 import usePrevious from '../../hooks/usePrevious'
 
-export default function TextInformation() {
+interface Prop {
+    isMobile: boolean
+}
+
+export default function TextInformation({ isMobile }: Prop) {
     const { counts } = useInquiry()
     const { isAllDone } = useContext( QueuesContext )
     const prev = usePrevious<boolean>( isAllDone )
+    const classes = [
+        'text-information',
+        ( isMobile && 'is-mobile' )
+    ].join( ' ' )
     const countsRef: MutableRefObject<InquiryCount> = useRef({
         inquiries: 0,
         sellers: 0,
@@ -28,9 +36,9 @@ export default function TextInformation() {
     })
 
     return (
-        <aside className="text-information">
+        <aside className={ classes }>
             <DateCounter />
-            { dataCounters }
+            <div className="data-counters">{ dataCounters }</div>
         </aside>
     )
 }

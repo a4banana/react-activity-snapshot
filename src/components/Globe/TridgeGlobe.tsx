@@ -13,6 +13,12 @@ interface Props {
     geojson: FeatureCollection
 }
 
+// DUMMY CONST
+const SCREEN_SIZE = {
+    width: window.outerWidth,
+    height: window.outerWidth * 1.525
+}
+
 const TridgeGlobe = memo(({ geojson }: Props) => {
     const dispatchQueues = useContext( QueuesDispatchContext )
     const canvasDom = useRef<HTMLDivElement | null>( null )
@@ -26,7 +32,8 @@ const TridgeGlobe = memo(({ geojson }: Props) => {
         const { renderers, render, init } = threeController.current;
 
         ( async () => {
-            await init();
+            // SET SCREEN SIZE HERE
+            await init( SCREEN_SIZE );
             dispatchQueues({ type: QueuesActionType.DONE_QUEUE, key: 'three-init' })
             renderers.forEach( renderer => ( canvasDom.current ) ? canvasDom.current.appendChild( renderer.domElement ) : false )
             addCallback( 'three controller rendering', render )

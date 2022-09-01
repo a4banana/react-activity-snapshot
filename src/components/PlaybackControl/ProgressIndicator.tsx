@@ -3,8 +3,6 @@ import { SyntheticEvent, useContext, CSSProperties, useEffect } from 'react'
 import { CycleContext } from '../../contexts/cycleContext'
 import { ProgressContext } from '../../contexts/progressContext'
 import { QueuesDispatchContext, QueuesActionType } from '../../contexts/queuesContext'
-import { gsap } from 'gsap'
-
 interface ComponentTransitionEvent<T = Element> extends SyntheticEvent<T, TransitionEvent> {
     elapsedTime: number;
     propertyName: string;
@@ -62,7 +60,6 @@ export default function ProgressIndicator() {
             <circle cx={ CIRCLE_SIZE } cy={ CIRCLE_SIZE } r={ radius }
                 style={ styles }
                 strokeDasharray={ dashArray }
-                // onTransitionEnd={ transitionEndHandler }
                 className="thumb"></circle>
         </svg>
     )
